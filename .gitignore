@@ -4,6 +4,7 @@ state/
 
 # user's own config (ship config.example.json instead)
 config.json
+!plugins/pawin-brain/templates/config.json
 
 # deps & OS noise
 node_modules/

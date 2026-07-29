@@ -50,6 +50,32 @@ test('marketplace and plugin expose the Codex v8.3 host', () => {
   ]) assert.ok(hooks[event], `missing ${event}`);
 });
 
+test('every bootstrap seed is present in the published plugin', () => {
+  for (const file of [
+    'IDENTITY.md',
+    'STATE.md',
+    'config.json',
+    'lessons-index.json',
+    'memory-index.md',
+    'v6-config.json'
+  ]) {
+    assert.ok(
+      fs.existsSync(path.join(PLUGIN, 'templates', file)),
+      `missing published bootstrap seed: ${file}`
+    );
+  }
+});
+
+test('the published config seed is not ignored by git', () => {
+  const result = spawnSync('git', [
+    'check-ignore', '-q', 'plugins/pawin-brain/templates/config.json'
+  ], {
+    cwd: ROOT,
+    encoding: 'utf8'
+  });
+  assert.equal(result.status, 1, result.stderr);
+});
+
 test('bundled runtime is byte-identical to its public v8.3 sources', () => {
   const manifest = json(path.join(PLUGIN, 'runtime-manifest.json'));
   assert.equal(manifest.baseline, 'Brain v8.3 public final');
