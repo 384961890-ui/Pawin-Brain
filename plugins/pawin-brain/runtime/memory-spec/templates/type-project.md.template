@@ -1,0 +1,28 @@
+---
+name: project_widget_dashboard_rewrite
+description: Status of the widget-dashboard rewrite — current phase, blockers, and next step.
+metadata:
+  type: project
+  last-verified: 2026-01-01
+---
+
+# Project: Widget Dashboard Rewrite
+
+<!-- `project` type: state of ongoing work. Changes often. Current
+     Conclusion should reflect "what's true right now" only — a running
+     changelog belongs in History, not padded into the conclusion. -->
+
+## Current Conclusion
+
+**Phase:** backend API migration (phase 2 of 3).
+**Blocker:** none currently — frontend phase 3 is scoped and waiting on
+phase 2 completion.
+**Next step:** finish pagination endpoint, then hand off to phase 3.
+
+Source of truth for detailed task tracking: `<path-to-external-tracker>`
+if one exists — this file should stay a summary, not duplicate a task
+board.
+
+## History
+
+- 2026-01-01 · phase 2 (backend API migration) started · phase 1 (schema design) completed and reviewed

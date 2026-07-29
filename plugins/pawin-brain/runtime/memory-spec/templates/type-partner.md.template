@@ -1,0 +1,25 @@
+---
+name: partner_acme_vendor_contact
+description: Contact and working relationship facts for the Acme Vendor account — who to reach, current standing.
+metadata:
+  type: partner
+  last-verified: 2026-01-01
+---
+
+# Partner: Acme Vendor
+
+<!-- `partner` type: facts about a third party (person/org) the agent
+     interacts with on the user's behalf. Verify before quoting anything
+     from this file in user-facing or external-facing material. -->
+
+## Current Conclusion
+
+- Primary contact: <placeholder name/role> — prefers email over chat for
+  anything requiring a paper trail.
+- Standing: active vendor relationship, contract renews annually in Q1.
+- Do not commit to pricing or timelines on this account without explicit
+  sign-off — this account has fixed approval requirements upstream.
+
+## History
+
+- 2026-01-01 · relationship established · initial vendor onboarding

@@ -1,0 +1,35 @@
+# <category-name> — Index
+
+> One entry per leaf file in this directory. Entries can be one line to one
+> short paragraph — long enough that scanning this index alone (without
+> opening the leaf file) is enough to decide relevance.
+>
+> Content between `<!-- AUTO:* BEGIN -->` / `<!-- AUTO:* END -->` markers is
+> machine-generated — do not hand-edit it. Run `scripts/generate-index.js`
+> to refresh it from the live source of truth it's configured to read.
+
+## Entries
+
+- [slug-one](slug-one.md) — one-line description of what this memory covers
+  and why it matters, written for someone who hasn't opened the file.
+- [slug-two](slug-two.md) — same pattern. If a file needs more than a
+  sentence of context to be useful here, that's a signal it belongs in its
+  own leaf file rather than being folded into the index.
+
+<!-- AUTO:STATE BEGIN -->
+<!-- Populated by generate-index.js from MEMORY_DIR/state/status.json (see
+     the STATE block source in scripts/generate-index.js). Left empty if
+     that file doesn't exist yet — the generator leaves an unreadable
+     source's block untouched rather than erroring. -->
+<!-- AUTO:STATE END -->
+
+<!-- AUTO:COUNTS BEGIN -->
+<!-- Populated by generate-index.js with a per-category leaf-file count
+     (see the COUNTS block source in scripts/generate-index.js). Works out
+     of the box with no extra setup. -->
+<!-- AUTO:COUNTS END -->
+
+## Subdirectories
+
+- **_archive/** — superseded entries, kept for history, excluded from
+  orphan/staleness scans.

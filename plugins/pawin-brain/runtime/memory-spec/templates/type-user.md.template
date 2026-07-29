@@ -1,0 +1,27 @@
+---
+name: user_jane_doe_preferences
+description: Jane Doe's working preferences and constraints — what this agent should always assume when acting on her behalf.
+metadata:
+  type: user
+  last-verified: 2026-01-01
+---
+
+# User: Jane Doe — Preferences
+
+<!-- `user` type: facts about the human(s) this agent serves. Changes rarely;
+     keep a high confidence bar before editing — this file is read on every
+     session and errors here propagate everywhere. -->
+
+## Current Conclusion
+
+- Prefers concise responses; no filler acknowledgements ("got it", "sure
+  thing") before substantive answers.
+- Timezone: UTC-5. Do not assume "tomorrow" means the calendar's next day
+  when a message arrives after midnight local time — it usually means
+  "later today" in her frame.
+- Communicates technical concepts best via concrete analogies, not jargon,
+  unless she's explicitly in a technical/professional context.
+
+## History
+
+- 2026-01-01 · initial record created · onboarding conversation established baseline preferences

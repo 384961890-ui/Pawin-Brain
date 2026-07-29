@@ -1,0 +1,384 @@
+{
+  "schema": 1,
+  "baseline": "Brain v8.3 public final",
+  "baselineSourceCommit": "4ba244f27482025cf677d513e244df44db3ab563",
+  "adapter": "Codex host compatibility changes only",
+  "files": [
+    {
+      "path": "CHANGELOG-v8.3.md",
+      "sha256": "11ec06cc241d2327eaebdb3e57c5895b83c860fe9954f0b6c53a0694c1da37d4"
+    },
+    {
+      "path": "CHANGELOG.md",
+      "sha256": "17f6cb5d368a8a7db2eb74a77bad6f4bb8139ad5ed2bc2da2547cb9bb3632e68"
+    },
+    {
+      "path": "INDEX.md",
+      "sha256": "e45912da4815d249fc0d4f1f95fc50db2ab498e22f79736a86879c2d9cb2f066"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "73b7ba458a579a51227b52406defca0cc27093667393743ebd7d0dfc20bd7ffb"
+    },
+    {
+      "path": "README.md",
+      "sha256": "ecafe6ad3b0a6a01e54deed18e6747898c5fe3334699720c20dbf1aa4d2818d8"
+    },
+    {
+      "path": "brain-readme.md",
+      "sha256": "f6420b3806b730cc894daf7147d2a5272903a161918e4107530b04cf5f84337c"
+    },
+    {
+      "path": "config.example.json",
+      "sha256": "344cea10d8669b7288f92a494d4fc3fe228bfbfcbdb2d6acaf27e796b782664f"
+    },
+    {
+      "path": "config.json.example",
+      "sha256": "fb26a2ea30a658c268126b3528310c19f2b9fa8f988d315b466148eb7ee07088"
+    },
+    {
+      "path": "memory-spec/AWAKENING.md",
+      "sha256": "9d395e2c8a297eea4797aab5f296171ba44d6555c1bc96936c4a5f0301cabc05"
+    },
+    {
+      "path": "memory-spec/LESSONS-LEARNED.md",
+      "sha256": "5579e8320d1a5473a8e1fec283e0fa01a0daac84d53d4a52b362882326747ce6"
+    },
+    {
+      "path": "memory-spec/README.md",
+      "sha256": "de32736f751cefd1f87511c3bfa99d118e818547e6b08cc421c034352f73d604"
+    },
+    {
+      "path": "memory-spec/SPEC.md",
+      "sha256": "bd25e0342cc565b9179941f8ab8f2069a45637a86f16a081fdcbee34d2ad3608"
+    },
+    {
+      "path": "memory-spec/scripts/generate-index.js",
+      "sha256": "dc026509d8cffef1c8fc8bbfe48f615b9a9b79cb873fe22eb08497551e40459d"
+    },
+    {
+      "path": "memory-spec/scripts/index-gardener.js",
+      "sha256": "d29d38e180fc636f4c5e48f7842ea7715de90d03d858a9fcbec0003e6b44a01f"
+    },
+    {
+      "path": "memory-spec/scripts/link-expand.js",
+      "sha256": "9be97e3cf8af804b523fa570655667f0f0fe0a999b08131504f18092e8e561a3"
+    },
+    {
+      "path": "memory-spec/scripts/memory-write-guard.js",
+      "sha256": "16c58227a076d8eabaf922e187b051f9cc8351a4a463a671abf01c5bf81dfdf8"
+    },
+    {
+      "path": "memory-spec/templates/INDEX.md.template",
+      "sha256": "a9ecacc24b6bf01785651db676d4edece4e8b5aaf6cc557bee9d424fc68fc410"
+    },
+    {
+      "path": "memory-spec/templates/MEMORY.md.template",
+      "sha256": "3be4032312261280ad0c4cd95fb2ef8579b50f71278e24dc7a08f2a5ad8e6984"
+    },
+    {
+      "path": "memory-spec/templates/type-feedback.md.template",
+      "sha256": "8305cf1ad7111ee1ec84c47bb15caa2f36e15e4f91efbbf7214b15cba4bb8896"
+    },
+    {
+      "path": "memory-spec/templates/type-lesson.md.template",
+      "sha256": "e13a4c718943c377b760ec7e970beeae409f88c669e78082b19e5c526ce01e05"
+    },
+    {
+      "path": "memory-spec/templates/type-partner.md.template",
+      "sha256": "8d5cce2f6a46ca2dd070ff15b77c8fc39e58cc1a4d9a151a90a15823ef0da50d"
+    },
+    {
+      "path": "memory-spec/templates/type-project.md.template",
+      "sha256": "27ecc3a98f0d152ff26476f2d19ccf7007643081c9afe9132324a67265149ca4"
+    },
+    {
+      "path": "memory-spec/templates/type-reference.md.template",
+      "sha256": "6cec24795c53b60b753bc0975feb1874b894160d49c0589a88881516a5d1600d"
+    },
+    {
+      "path": "memory-spec/templates/type-user.md.template",
+      "sha256": "1c299b97853fba8989d985a5b942c771903fb7107e9dbf6cfd46eb1b2b56278c"
+    },
+    {
+      "path": "qmd-engine/.gitignore",
+      "sha256": "473e08b8104b159311e38ef3ee1dc3ed225899de5a31a3164683b95f3a31027b"
+    },
+    {
+      "path": "qmd-engine/DEPLOY.md",
+      "sha256": "10a128c49f78810e0ff79a8ccac11942899695716a0ddde8c75da32739bb9814"
+    },
+    {
+      "path": "qmd-engine/PITFALLS.md",
+      "sha256": "136336f2a8ffdb72a2edfde77e9080e559aa5462f4f255991bfc4b6f73b00958"
+    },
+    {
+      "path": "qmd-engine/README.md",
+      "sha256": "04f8c17bcd64fe1f9241d1e6784c1faad7ed217403a82f3d4eac0d14b965af98"
+    },
+    {
+      "path": "qmd-engine/full_scan.py",
+      "sha256": "dc20dcc663edb33a02dc71b2e39e45df63b3feb8dc2e7b2e9b1715aa83cd0c59"
+    },
+    {
+      "path": "qmd-engine/health_check.py",
+      "sha256": "2f8a8f31b440bdc689fc5cbc7e4cd4de84186ebc99302906b13e5a24a2571763"
+    },
+    {
+      "path": "qmd-engine/launchd/com.example.qmd-daemon.plist",
+      "sha256": "78435c9bba758b153ab71d4eed714a47d5ed5382fa3cd0ea6ae2e2d602b1f740"
+    },
+    {
+      "path": "qmd-engine/launchd/com.example.qmd-nightly.plist",
+      "sha256": "aac904ed4b682531226538aa0c2525604638d95612cf0d946e6738c6c982804f"
+    },
+    {
+      "path": "qmd-engine/nightly_run.sh",
+      "sha256": "367436a1a543bb8635c44c3b67de698b87102d067bdfa066402bc0d94017ee0a"
+    },
+    {
+      "path": "qmd-engine/qmd_config.py",
+      "sha256": "6d2ee565852ddc6892e20621ba11e83ba2914aa867718dae0d4587ae0554d604"
+    },
+    {
+      "path": "qmd-engine/qmd_daemon.py",
+      "sha256": "144d20e039b2413118786838a1180cd68239925499e4367aa547dc1b9a219aaa"
+    },
+    {
+      "path": "qmd-engine/qmd_src/qmd/__init__.py",
+      "sha256": "2177c288b1403e9e5475ece868c5f6c03b8cfa1332f36f1cba8d5fec3b98c584"
+    },
+    {
+      "path": "qmd-engine/qmd_src/qmd/ingest.py",
+      "sha256": "dc278af130a1b6a41c2080ba7878a65161aab61ac3ccef03a64912f928ff00c4"
+    },
+    {
+      "path": "qmd-engine/qmd_src/qmd/search_embed.py",
+      "sha256": "010a3119cc47955b1e82c23f52c5f7984a29d7000f7ba02f7f87d0aa312bca7f"
+    },
+    {
+      "path": "qmd-engine/qmd_src/qmd/utils.py",
+      "sha256": "f541378c6e7625e125b78cd44ef39a415af12cd24aed03e82a65a3d10be39e85"
+    },
+    {
+      "path": "qmd-engine/systemd/qmd-daemon.service",
+      "sha256": "ee9b463655505ee42d6f915dbbb4b341c84e3aa8dd7665223fe43c50e8563ce8"
+    },
+    {
+      "path": "qmd-engine/systemd/qmd-nightly.service",
+      "sha256": "ba2caa17e4bf0be1314fff7cc3c2ab7dc98c79bc249d5a9cb2ba20af8e85a555"
+    },
+    {
+      "path": "qmd-engine/systemd/qmd-nightly.timer",
+      "sha256": "b9359af904f137ebee4e79e5ddd8e14c53458d1d9b8cbbe88f71ca14a78ef936"
+    },
+    {
+      "path": "scripts/analyze-behavior.js",
+      "sha256": "ac4ddf8bbf6acff66b8004035003a6fa33616ca2dd22f10624522d215b9075cc"
+    },
+    {
+      "path": "scripts/archive-rejected.js",
+      "sha256": "5afb0833d9cf7780b56927c398aa6af74fa8b83180489a8188501bdab1290d77"
+    },
+    {
+      "path": "scripts/capture-lesson.js",
+      "sha256": "85902cde646e9d225a717871dcf632c4740d48b54a7a1a7e83f5ff833e78d11f"
+    },
+    {
+      "path": "scripts/cleanup-noise-lessons.js",
+      "sha256": "caed8bb1f1fbbfc4d9ccf8ef716177b67d8474fe2cfbb6140cdf7a14d73c9334"
+    },
+    {
+      "path": "scripts/debug-up.js",
+      "sha256": "135b8cb5d38c06d228c93b267466eb09b1330a1e869e5559cfda8965d59ff3da"
+    },
+    {
+      "path": "scripts/decay-lessons.js",
+      "sha256": "9b28297c5ed9afc3669ad15df162ccc9760ac0341d34b071db6045557233707e"
+    },
+    {
+      "path": "scripts/detectors.js",
+      "sha256": "17e7d74d1a6ae604d60732fc0e22d8e125300383353e9c753fcb35c24a83e634"
+    },
+    {
+      "path": "scripts/efficacy.js",
+      "sha256": "db14bb2d24ca494be47bbe486754876e21049e770bb95decef6f9364c044f8ec"
+    },
+    {
+      "path": "scripts/export-research-data.js",
+      "sha256": "62746ad9bd05b027d152394750b412d50a47359222512d2cd8a2a8afc270822a"
+    },
+    {
+      "path": "scripts/inject-context.js",
+      "sha256": "054f38997e131483b0a4db54c49b853986c50cb9334c0db4d67ef86ac566dbf8"
+    },
+    {
+      "path": "scripts/link-expand.js",
+      "sha256": "221d318e6f2f3a4b97c90b6aa38233bcdf923a169611df18a68d5ed800cb9d6e"
+    },
+    {
+      "path": "scripts/rebuild-qmd.py",
+      "sha256": "40c446af36b9273bb2057d91fbd8a9c01d6baca30c1249e6ac58d856ea5cd3e8"
+    },
+    {
+      "path": "scripts/selftest.js",
+      "sha256": "853d4654e02254f15d33d15a5c3b71abfd723c636eeaf10904c7fc39ed4c3d5c"
+    },
+    {
+      "path": "scripts/smell-check.js",
+      "sha256": "90769ae36adb18238629515f0e4a1d86433fc8db669faa8e9d0e932ba63119ea"
+    },
+    {
+      "path": "scripts/track-behavior.js",
+      "sha256": "1b4258b4cfe6139a3b473d13f82bac8a58671ac00918116536b4b37da8ecaf67"
+    },
+    {
+      "path": "scripts/update-state.js",
+      "sha256": "f3e50e2fa58012462ace2e4b39e46700afde0bc7cf34a6ab948bcec13cb6c6a1"
+    },
+    {
+      "path": "scripts/util.js",
+      "sha256": "eb8098efe44f0eeb825225b31524a995f5cde04ac30e5cdf33039a2893dfe668"
+    },
+    {
+      "path": "tools/INDEX.md",
+      "sha256": "ed5bb86a03be808f21be9c6747fd5364d9cc169b63ababc7cfdd051afa750298"
+    },
+    {
+      "path": "tools/index-gardener.js",
+      "sha256": "3d0db6fd6c410f35f330c33a13ec5f9a2c6454295b9c6a9d4f5c7fd5208501f5"
+    },
+    {
+      "path": "v2/README.md",
+      "sha256": "182fd8bbda9cff1fee27c1db74da07109d7c51da78cab20b191e825285675145"
+    },
+    {
+      "path": "v2/protocol.md",
+      "sha256": "2441a68f17c0e8e5ab47c7b0656623ee34c0c6d3b279d57d17dab9b9cde27b9b"
+    },
+    {
+      "path": "v2/scripts/finish-the-work.js",
+      "sha256": "7f94121be0775448dabeed6734195dac174b84f7cb737fb82105c8d38bc916da"
+    },
+    {
+      "path": "v2/scripts/honest-loop-mcp.js",
+      "sha256": "073ea5d5946de86582196fde7ceed7a0eab2798e9eb20c0e8707a82f879a82d8"
+    },
+    {
+      "path": "v2/scripts/honest-loop/adversarial-probe.js",
+      "sha256": "320ae3bdc4338ffc0b4b99feaede7b3eba6b4d885d321d55511a62ec2fa030c7"
+    },
+    {
+      "path": "v2/scripts/honest-loop/fuse.js",
+      "sha256": "802e5ec64dbac6740ac5a00260c6becf33e3d0e457ff4e49b3ec7fa7f7fb3932"
+    },
+    {
+      "path": "v2/scripts/honest-loop/signal-2-consistency.py",
+      "sha256": "c531a0598a66701380d3b44e039c45df872017c09a11c4937b02f54ca1908fb9"
+    },
+    {
+      "path": "v2/scripts/honest-loop/signal-3-ensemble.py",
+      "sha256": "f679929827bc7843dcf764a6fe948ecdc8230cbbf4a05777c21ce9b5ba8d68b8"
+    },
+    {
+      "path": "v2/scripts/inject-protocol-v2.js",
+      "sha256": "d4d1bc517add027c8b778b524a04bbeba515c8b77ade50c12f75cb58e4d961ff"
+    },
+    {
+      "path": "v2/scripts/sleep-loop/calibration-update.py",
+      "sha256": "a5d8deedb0b2a0c3071622ccc1a71d22797767b00bcfd310c89d43796a7bc58f"
+    },
+    {
+      "path": "v2/scripts/sleep-loop/nightly-consolidate.py",
+      "sha256": "ce2c330cbc76f4063f01e2a9b843806ae93962e302c72d34c0bf69e73e0ead20"
+    },
+    {
+      "path": "v2/scripts/stop-audit.js",
+      "sha256": "3b6face6f52c26095913f24d051b8fff5da37018ede1e9e2ff29ff8632aa45d6"
+    },
+    {
+      "path": "v3/DESIGN.md",
+      "sha256": "75628adfc4b7d4de2411c731e0130bda1512249459764d9e759b25f057aadfe1"
+    },
+    {
+      "path": "v3/install-think-loop.sh",
+      "sha256": "402cab31955f0b4a40242bbffbe9264e2f9f0211c616d53cb9fb60c5d2acf9c2"
+    },
+    {
+      "path": "v3/scripts/think-detect.js",
+      "sha256": "33e2a5f7ac37a14bf984c2201c201d7418ff52816d8027dfc6027772ef8e8743"
+    },
+    {
+      "path": "v4/DESIGN-DRAFT.md",
+      "sha256": "a023317fb775016ddb20838ff94ed3cad6f798815d60c9bbd4e36abf35c981d8"
+    },
+    {
+      "path": "v4/DESIGN.md",
+      "sha256": "ef51e6f894a87f95832bc0e20b0501ede634644d991e4b4f8a29c59aeda5db1c"
+    },
+    {
+      "path": "v4/scripts/idea-loop-trigger.js",
+      "sha256": "44d5a11cc79928ec6b004601bee38c4480cdc61386ae999273ea033d94b44075"
+    },
+    {
+      "path": "v5/DESIGN.md",
+      "sha256": "51c3dfe3012cfa44828a949dadc635f9346d4d30827f90d5a4f369da73024413"
+    },
+    {
+      "path": "v5/scripts/ingest.js",
+      "sha256": "c3d459e6ad1d9ec99a2e93eb53c67851ade8fd02b349ef100a3c85063bd0dc35"
+    },
+    {
+      "path": "v5/scripts/jxa/ocr-image.js",
+      "sha256": "f350b44c6e66b4a9e9697caca6a00b1562ed4495c2d5341faec0927838132932"
+    },
+    {
+      "path": "v5/scripts/jxa/pdf-extract.js",
+      "sha256": "e07f39750226a996174c8bad96fc33f83a6aed4e99e39988c37bff88f94c8c99"
+    },
+    {
+      "path": "v6/DESIGN.md",
+      "sha256": "50602c41da0a47b20a5e0b3d2d2b583d3387ca27bccf5ffbb8665ce7bbc276a5"
+    },
+    {
+      "path": "v6/DISPATCH-TRIGGER.md",
+      "sha256": "d7b54072c086c7ebe3a4b78419b73f0d6954f3577bcdd9ff56f0f8625763e0c7"
+    },
+    {
+      "path": "v6/PROMPT-TEST.md",
+      "sha256": "f6ce0a346315a846d42ef7502bd861813f3ab1d20fef6e2fac3fca6d6197f2b4"
+    },
+    {
+      "path": "v6/config.json.example",
+      "sha256": "d9899b77a583f30733c8c97f65f01cbe4ab783c8661efc90242eed8afc2ffe74"
+    },
+    {
+      "path": "v6/loop-config.json.example",
+      "sha256": "bd9eaf627e130871da486835474668f896c6c16ce1ffef35765c819aa442b274"
+    },
+    {
+      "path": "v6/scripts/detectors.js",
+      "sha256": "bffa8c941021144cce0087a2583dbf887361c48bee672de321921608a3b0f642"
+    },
+    {
+      "path": "v6/scripts/loop-prompt.md",
+      "sha256": "78b0674a3114ea2ab84d6df286ac8fd3a8b78c3492c374a3ce75ad4581cbb214"
+    },
+    {
+      "path": "v6/scripts/selftest.js",
+      "sha256": "6c4751e811c496365e56d9105f8e96f89049b3d9af309c56d094f9efd7cecd1b"
+    },
+    {
+      "path": "v6/scripts/smell-check.js",
+      "sha256": "1e98023f0729503c5d70b9c403c80ead6dbc34f20f3beaddf08b3448afc353c6"
+    },
+    {
+      "path": "v6/scripts/v6-loop-run.sh",
+      "sha256": "2aff2e4d24a9548a1281f1bbec2472cac785a85f96b0290b2241cbca1ce7c798"
+    },
+    {
+      "path": "v6/scripts/v6_loop_run.py",
+      "sha256": "3ee3a976958f292f51687ca497a489f91def97434c938e919043d5d952247910"
+    }
+  ]
+}

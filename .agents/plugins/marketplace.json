@@ -1,0 +1,20 @@
+{
+  "name": "pawin-brain",
+  "interface": {
+    "displayName": "Pawin Brain"
+  },
+  "plugins": [
+    {
+      "name": "pawin-brain",
+      "source": {
+        "source": "local",
+        "path": "./plugins/pawin-brain"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

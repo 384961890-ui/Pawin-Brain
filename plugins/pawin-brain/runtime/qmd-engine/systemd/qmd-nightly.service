@@ -1,0 +1,14 @@
+[Unit]
+Description=qmd-engine incremental index scan (one-shot, triggered by qmd-nightly.timer)
+
+[Service]
+Type=oneshot
+# 用户级 unit（~/.config/systemd/user/）本身就以当前用户身份运行，
+# User= 是 system 级 unit 才用的指令，这里加了大概率直接拒启动
+# （status=217/USER）——去掉，换真实路径即可。
+Environment=QMD_HOME=/home/YOUR_USERNAME/.qmd
+Environment=QMD_ENGINE_DIR=/path/to/qmd-engine
+Environment=QMD_VENV_PYTHON=/path/to/your/venv/bin/python3
+# Linux 下没有 launchctl kickstart，nightly_run.sh 会退回 curl /reload；
+# 若想让重启也应用代码更新，改配 systemctl --user restart qmd-daemon.service。
+ExecStart=/bin/bash /path/to/qmd-engine/nightly_run.sh

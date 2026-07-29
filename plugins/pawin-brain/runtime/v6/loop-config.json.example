@@ -1,0 +1,113 @@
+{
+  "_doc": "claude-brain v6 第二支 · 5h 定时上班 loop 配置。enabled:false 一键关掉。用户定的铁律(2026-06-17)：opus 4.6+/thinking high/干满20min/30min硬截/走Plan limit/互斥锁/dispatch速率≤3天/活跃检测30min。详 DESIGN §7。",
+  "enabled": true,
+  "version": "0.1-dryrun",
+  "trigger": {
+    "scheduled_hours": [
+      0,
+      4,
+      9
+    ],
+    "scheduled_minute": 1,
+    "dispatch_daily_limit": 3,
+    "active_detection_min": 30
+  },
+  "execution": {
+    "model": "claude-opus-4-7",
+    "effort": "high",
+    "max_thinking_tokens": 31999,
+    "min_duration_min": 20,
+    "max_duration_min": 30,
+    "max_duration_sec_hard_kill": 1800,
+    "mode": "dry-run"
+  },
+  "live_actions": {
+    "_doc": "用户 6/19 拍板：全局 mode=dry-run 时，仅这两个最安全动作单独 live（只追加、非破坏）。其他动作（改待办 / 执行任务 / 索引梳理 / 项目推荐）一律跟随 execution.mode，别放 live。",
+    "reverse_sync": true,
+    "loop_diary_report": true
+  },
+  "paths": {
+    "claude_bin": "claude",
+    "loop_prompt": "~/.claude-brain/v6/scripts/loop-prompt.md",
+    "worklog_dir": "~/.claude-brain/v6/loop-worklog",
+    "state_file": "~/.claude-brain/v6/state/loop-state.json",
+    "dryrun_output_dir": "/tmp/v6-loop-dryrun",
+    "stream_log_dir": "~/.claude-brain/v6/loop-worklog/streams",
+    "stderr_log": "~/.claude-brain/v6/loop-worklog/v6loop.err.log"
+  },
+  "whitelist_tasks": [
+    {
+      "id": "diary_draft",
+      "name": "写日记草稿",
+      "write_to": "~/.claude/diary/draft/",
+      "never_touch": "~/.claude/diary/ root"
+    },
+    {
+      "id": "memory_index_review",
+      "name": "记忆索引梳理",
+      "write_to": "~/.claude-brain/v6/loop-worklog/ (diff 报告)",
+      "never_touch": "正式 INDEX.md（用户 promote）"
+    },
+    {
+      "id": "todo_organize",
+      "name": "Todo 整理分类",
+      "write_to": "append 到 ~/.claude/workbench/工作缓冲区.md 底部 [loop] 区",
+      "never_touch": "工作缓冲区其他段"
+    },
+    {
+      "id": "diary_history_synthesis",
+      "name": "历史日记翻读提炼脉络",
+      "write_to": "~/.claude/projects/<escaped-home>/memory/reference/ 新条目",
+      "never_touch": "~/.claude/diary/ root"
+    },
+    {
+      "id": "memory_health_check",
+      "name": "MEMORY.md 健康检查",
+      "write_to": "~/.claude-brain/v6/loop-worklog/ (断链报告)",
+      "never_touch": "MEMORY.md 本身"
+    },
+    {
+      "id": "project_scan_recommend",
+      "name": "Phase B · 项目扫描推荐（只读+建议）",
+      "write_to": "~/.claude-brain/v6/loop-worklog/ (推荐报告 recommend-YYYY-MM-DD-HHMM.md)",
+      "never_touch": "任何项目目录的代码/配置/文档（<your_project_1>/<your_project_2>/claude-brain本身 等）— 只读 + 只写推荐报告"
+    },
+    {
+      "id": "cc_reverse_sync",
+      "name": "Step 0 · CC→dispatch 反向同步（每天一次 · 无条件先跑 · 非优先级任务）",
+      "_note": "不是 Step 1 优先级任务，是每轮前奏。读 CC 日记摘决策/状态/雷 → 写 digest。dispatch memory 路径已确认固定持久（单一 session UUID，5/25 至今未变）。",
+      "write_to_dryrun": "/tmp/v6-loop-dryrun/cc-daily-digest.md",
+      "write_to_live": "$DISPATCH_MEMORY_DIR/cc-daily-digest.md (+ 同目录 MEMORY.md 索引行；DISPATCH_MEMORY_DIR 为你的 Claude Code local-agent-mode-sessions/<agent>/<session>/agent/memory 路径)",
+      "never_touch": "dispatch 其他记忆文件；CC 日记只读不写",
+      "live_requires": "v6_loop_run.py 已为该 dispatch memory 目录加 --add-dir（dry-run 不需要）"
+    }
+  ],
+  "phase_b_recommend_max_age_hours": 12,
+  "redlines": [
+    "git push / commit / merge / branch / reset --hard",
+    "rm / 删除任何文件",
+    "改 ~/.claude/settings.json / .claude-brain/*/config.json / hook 脚本",
+    "调付费 API（fal / openai / gemini-pro / claude-3-5+ 直 API）",
+    "给非用户的人发 Telegram / Discord / Email",
+    "动 ~/.claude/CLAUDE.md / identity/ / vault/",
+    "扩大授权范围 / 改 permission-mode",
+    "动其他项目目录（<your_other_projects>）",
+    "promote 任何草稿到正式区（必须用户点头）"
+  ],
+  "notification": {
+    "telegram_chat_id": "<your_telegram_chat_id>",
+    "channels": {
+      "success_with_output": "telegram_normal",
+      "success_no_output": "silent_log_only",
+      "single_failure": "silent_log_only",
+      "consecutive_2_failure": "telegram_vibrate",
+      "redline_triggered": "telegram_plus_email_plus_stop_loop",
+      "daily_8am_summary": "telegram_normal"
+    }
+  },
+  "mutex": {
+    "lock_file": "~/.claude-brain/v6/state/loop-state.json",
+    "lock_field": "running",
+    "on_collision": "exit_with_tg_notify"
+  }
+}

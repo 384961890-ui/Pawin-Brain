@@ -1,0 +1,31 @@
+{
+  "_doc": "Claude Brain · Shitcode Red-Light config. Copy this to config.json (in your BRAIN_DIR, default ~/.claude-brain/) and flip enabled:true to turn it on. Tune any threshold here — one place, no code changes.",
+
+  "enabled": false,
+
+  "file_too_long": { "hard_max": 800, "warn": 500 },
+  "long_block_lines": 80,
+  "todo_pileup_threshold": 5,
+  "dead_code_min_lines": 6,
+  "dead_code_header_skip": 10,
+  "debug_leftover_min": 2,
+
+  "throttle_minutes": 15,
+  "max_findings_shown": 2,
+  "max_file_bytes": 524288,
+
+  "source_exts": [
+    ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs",
+    ".py", ".rs", ".go", ".java", ".kt", ".kts",
+    ".c", ".h", ".cpp", ".hpp", ".cc",
+    ".rb", ".php", ".swift", ".vue", ".svelte",
+    ".sh", ".bash", ".scala"
+  ],
+
+  "_skip_note": "Paths containing any of these substrings are skipped. '.claude-brain' exempts the tool's own dir. Add your private paths (notes/journals/memory stores) so the tool never reads them.",
+  "skip_path_patterns": [
+    "node_modules", "/dist/", "/build/", ".git/", "__pycache__",
+    "/vendor/", "/.next/", "/target/", "/coverage/", ".min.js",
+    ".claude-brain"
+  ]
+}

@@ -1,0 +1,14 @@
+[Unit]
+Description=Run qmd-engine incremental index scan daily at 04:00
+
+[Timer]
+OnCalendar=*-*-* 04:00:00
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+
+# 安装：
+#   cp qmd-nightly.service qmd-nightly.timer ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now qmd-nightly.timer

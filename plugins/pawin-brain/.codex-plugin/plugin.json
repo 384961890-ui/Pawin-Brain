@@ -1,0 +1,37 @@
+{
+  "name": "pawin-brain",
+  "version": "8.3.0",
+  "description": "Brain v8.3 persistent memory, cognitive loops, and structured recall for Codex",
+  "author": {
+    "name": "Pawin AI",
+    "url": "https://pawinai.cn"
+  },
+  "homepage": "https://pawinai.cn/Brain",
+  "repository": "https://github.com/384961890-ui/Pawin-Brain",
+  "license": "MIT",
+  "keywords": [
+    "codex",
+    "memory",
+    "structured-memory",
+    "qmd",
+    "cognitive-loop"
+  ],
+  "interface": {
+    "displayName": "Pawin Brain",
+    "shortDescription": "Brain v8.3 persistent memory for Codex.",
+    "longDescription": "Give Codex durable identity, structured memory, lessons, graph-aware recall, QMD retrieval, and the v2-v8 cognitive feedback loops.",
+    "developerName": "Pawin AI",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Write"
+    ],
+    "websiteURL": "https://pawinai.cn/Brain",
+    "defaultPrompt": [
+      "Show what Brain remembers about this project.",
+      "Run the Pawin Brain doctor check.",
+      "Explain which Brain v8.3 loops are active."
+    ],
+    "brandColor": "#D8FF3E"
+  }
+}

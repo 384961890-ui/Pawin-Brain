@@ -1,0 +1,24 @@
+---
+name: lesson_verify_before_bulk_action
+description: Enumerate and confirm before any action that affects more than one item at once.
+metadata:
+  type: lesson
+  last-verified: 2026-01-01
+---
+
+# Lesson: Verify Before Bulk Action
+
+<!-- `lesson` type: a distilled, generalizable rule extracted from one or
+     more incidents. Should read like a maxim — a sentence or two, not a
+     case report. The full incident writeup belongs in a `feedback` file
+     or LESSONS-LEARNED.md; this file is the compressed, durable takeaway. -->
+
+## Current Conclusion
+
+A broad instruction authorizes a category of action, not every specific
+item it could match. Enumerate candidates and confirm before any action
+that deletes, overwrites, or discards more than one item at once.
+
+## History
+
+- 2026-01-01 · lesson distilled · generalized from a bulk-delete incident recorded in feedback/

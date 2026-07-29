@@ -1,0 +1,31 @@
+{
+  "_doc": "claude-brain v6 屎山红灯配置。enabled:false 一键关掉整个机制。阈值都在这，调一处即可。2026-06-17 启用。",
+  "enabled": true,
+
+  "file_too_long": { "hard_max": 800, "warn": 500 },
+  "long_block_lines": 80,
+  "todo_pileup_threshold": 5,
+  "dead_code_min_lines": 6,
+  "dead_code_header_skip": 10,
+  "debug_leftover_min": 2,
+
+  "throttle_minutes": 15,
+  "max_findings_shown": 2,
+  "max_file_bytes": 524288,
+
+  "source_exts": [
+    ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs",
+    ".py", ".rs", ".go", ".java", ".kt", ".kts",
+    ".c", ".h", ".cpp", ".hpp", ".cc",
+    ".rb", ".php", ".swift", ".vue", ".svelte",
+    ".sh", ".bash", ".scala"
+  ],
+
+  "skip_path_patterns": [
+    "node_modules", "/dist/", "/build/", ".git/", "__pycache__",
+    "/vendor/", "/.next/", "/target/", "/coverage/", ".min.js",
+    "/.claude/projects/<escaped-home>/memory/",
+    "/.claude/diary/",
+    "/.claude-brain/lessons/"
+  ]
+}

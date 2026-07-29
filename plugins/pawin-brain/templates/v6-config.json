@@ -1,0 +1,13 @@
+{
+  "enabled": false,
+  "file_too_long": {
+    "hard_max": 800,
+    "warn": 500
+  },
+  "long_block_lines": 80,
+  "todo_pileup_threshold": 5,
+  "dead_code_min_lines": 6,
+  "debug_leftover_min": 2,
+  "throttle_minutes": 5,
+  "max_findings_shown": 2
+}

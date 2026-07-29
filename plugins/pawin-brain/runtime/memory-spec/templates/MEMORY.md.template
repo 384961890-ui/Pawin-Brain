@@ -1,0 +1,40 @@
+# MEMORY.md — Index Root
+
+> This file is the single entry point into the memory tree. It lists
+> categories and points to their `INDEX.md`; it does not contain memory
+> content itself. Keep entries to one line each.
+>
+> Retrieval tiering: literal/grep match first (free) → local embedding
+> search (no LLM token cost) → embedding + reranker (slowest, highest
+> precision) only when the first two are ambiguous.
+>
+> Freshness: memory files in governed categories carry
+> `metadata.last-verified: YYYY-MM-DD` in frontmatter; a scheduled gardener
+> flags anything older than the configured threshold.
+>
+> Dual-section rule: governed categories (see list below) store files as
+> Current Conclusion + append-only `## History`. Changing a conclusion
+> requires appending a history line, not editing history in place.
+
+## 🔥 Most Important Right Now (optional — recency-weighted work only)
+
+- <YYYY-MM-DD> · <one-line pointer to what changed and why it matters> → [slug](category/slug.md)
+
+## Categories
+
+- **user/** — facts about the person(s) this agent serves → [user/INDEX.md](user/INDEX.md)
+- **feedback/** — corrections received, generalized into rules → [feedback/INDEX.md](feedback/INDEX.md)
+- **projects/** — state of ongoing work → [projects/INDEX.md](projects/INDEX.md)
+- **partners/** — facts about third parties this agent interacts with → [partners/INDEX.md](partners/INDEX.md)
+- **reference/** — reusable technical/procedural knowledge → [reference/INDEX.md](reference/INDEX.md)
+- **lessons/** — distilled, generalizable rules from incidents → [lessons/INDEX.md](lessons/INDEX.md)
+
+Non-governed, freeform areas (not subject to the dual-section rule — mark
+your own house rules here if you add any): scratch/working notes, session
+logs, secrets/credentials vaults, raw archives.
+
+## Archival
+
+Superseded content moves to a category's `_archive/` subdirectory rather
+than being deleted. Leave one line stating why it was archived and what,
+if anything, superseded it.

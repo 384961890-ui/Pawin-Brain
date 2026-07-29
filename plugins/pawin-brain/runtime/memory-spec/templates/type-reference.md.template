@@ -1,0 +1,26 @@
+---
+name: reference_deploy_procedure
+description: Standard deploy procedure for the staging→production pipeline used by this project.
+metadata:
+  type: reference
+  last-verified: 2026-01-01
+---
+
+# Reference: Deploy Procedure
+
+<!-- `reference` type: reusable technical/procedural knowledge. Re-verify
+     after the underlying tool or procedure changes — a stale reference
+     file is worse than no reference file, because it's trusted by default. -->
+
+## Current Conclusion
+
+1. Merge to `main` triggers CI; wait for green build.
+2. Run `<deploy-command>` against staging; smoke-test the three critical
+   paths (list them, don't rely on memory of what they are).
+3. If staging passes, promote the same build artifact to production — do
+   not rebuild, to guarantee staging and production ran identical code.
+4. Tag the release in version control immediately after promotion.
+
+## History
+
+- 2026-01-01 · procedure documented · captured from the process used for the first production deploy

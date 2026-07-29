@@ -1,0 +1,30 @@
+[Unit]
+Description=qmd-engine semantic search daemon
+After=network.target
+
+[Service]
+Type=simple
+# 换成真实路径。注意：这是用户级 unit（~/.config/systemd/user/ +
+# systemctl --user），user 模式的 unit 本来就以启动它的用户身份运行，
+# User= 指令是 system 级 unit（/etc/systemd/system/）才用的，在 user
+# 模式下大多数 systemd 版本会直接拒绝启动（status=217/USER）。
+Environment=QMD_HOME=/home/YOUR_USERNAME/.qmd
+Environment=QMD_DAEMON_PORT=18765
+Environment=QMD_DAEMON_ERR_LOG=/home/YOUR_USERNAME/.qmd/logs/qmd-daemon.err
+ExecStart=/path/to/your/venv/bin/python3 /path/to/qmd-engine/qmd_daemon.py
+Restart=on-failure
+RestartSec=5
+# Restart=on-failure 配合 qmd_daemon.py 的 fail-fast sys.exit(2/3)：
+# 维度错配等严重问题不会带错误状态硬撑，退出后由 systemd 重启并重新校验。
+# RestartSec=5 起到和 launchd ThrottleInterval 类似的作用：问题没解决前
+# 不会几乎无间隔地反复重启、白烧资源。
+
+[Install]
+WantedBy=default.target
+
+# 安装（用户级 unit，无需 root）：
+#   mkdir -p ~/.config/systemd/user
+#   cp qmd-daemon.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now qmd-daemon.service
+#   systemctl --user status qmd-daemon.service

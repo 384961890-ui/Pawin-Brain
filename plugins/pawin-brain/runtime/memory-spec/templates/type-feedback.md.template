@@ -1,0 +1,35 @@
+---
+name: feedback-confirm-before-bulk-delete
+description: Before deleting more than one file/record in a single action, list what will be deleted and get explicit confirmation — one incident of over-broad deletion is what taught this.
+metadata:
+  type: feedback
+  last-verified: 2026-01-01
+---
+
+# Feedback: Confirm Before Bulk Delete
+
+<!-- `feedback` type: corrections the agent received. Append frequently.
+     Each entry should generalize into a reusable rule, not just record the
+     incident — the incident goes in the Why section below, the rule goes
+     in Current Conclusion. -->
+
+## Current Conclusion
+
+**Before any action that deletes, overwrites, or discards more than one
+item at once, list the items and get explicit confirmation — do not infer
+consent from a broad instruction like "clean up the old files."**
+
+A broad instruction gives permission for the *category* of action, not for
+every specific item it could match. Enumerate first, then act.
+
+## Why
+
+A cleanup instruction ("remove the old draft files") was interpreted too
+literally and matched files the user still needed, because "old" was
+inferred from filename patterns rather than confirmed. The fix isn't
+"be more careful" (unmeasurable) — it's a mechanical rule: enumerate
+candidates, show them, wait for confirmation, then act.
+
+## History
+
+- 2026-01-01 · rule created · bulk-delete-without-listing incident

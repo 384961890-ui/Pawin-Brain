@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.example.qmd-daemon</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/path/to/your/venv/bin/python3</string>
+        <string>/path/to/qmd-engine/qmd_daemon.py</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>QMD_HOME</key>
+        <string>/Users/YOUR_USERNAME/.qmd</string>
+        <key>QMD_DAEMON_PORT</key>
+        <string>18765</string>
+        <key>QMD_DAEMON_ERR_LOG</key>
+        <string>/Users/YOUR_USERNAME/.qmd/logs/qmd-daemon.err</string>
+    </dict>
+
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+
+    <key>StandardOutPath</key>
+    <string>/Users/YOUR_USERNAME/.qmd/logs/qmd-daemon.out</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR_USERNAME/.qmd/logs/qmd-daemon.err</string>
+</dict>
+</plist>
+<!--
+安装：
+  mkdir -p ~/.qmd/logs   # launchd 不会自动建 StandardOutPath/StandardErrorPath 所在目录，
+                         # 目录不存在时日志静默丢失（不报错，只是文件从来没被创建）
+  cp com.example.qmd-daemon.plist ~/Library/LaunchAgents/
+  # 把 /path/to/... 和 YOUR_USERNAME 换成真实路径
+  launchctl load ~/Library/LaunchAgents/com.example.qmd-daemon.plist
+
+KeepAlive=true：daemon 崩溃/被杀会自动拉起。配合 qmd_daemon.py 里的
+fail-fast sys.exit(2/3)——维度错配等严重问题不会带着错误状态硬撑，
+而是退出让 launchd 重启，重启时会再校验一次。
+
+ThrottleInterval=30：KeepAlive=true 意味着退出就重启，如果 fail-fast
+的问题没解决（比如维度一直错配），会变成每次启动都在几秒内重新加载
+几百 MB～GB 的索引再退出，形成高频崩溃重启循环，白白烧 CPU/内存带宽。
+这个值给 launchd 两次重启之间留至少 30 秒喘息，不是解决根因，只是让
+"没人管的话它会一直安静地重启"这件事变得没那么烧资源——真正要做的是
+看 err log 找到根因（维度错配大概率要跑 full_scan.py rebuild）。
+
+QMD_DAEMON_ERR_LOG 要填得和上面 StandardErrorPath 一样，daemon 自己会
+在这个文件超过 10MB 时做一次轮转（见 qmd_daemon.py 里的
+_rotate_err_log_if_huge 注释——轮转只在下次重启时真正生效，不是设了
+就立刻清空当前文件）。
+-->

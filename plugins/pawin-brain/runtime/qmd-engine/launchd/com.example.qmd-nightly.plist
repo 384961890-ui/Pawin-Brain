@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.example.qmd-nightly</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/path/to/qmd-engine/nightly_run.sh</string>
+    </array>
+
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>QMD_HOME</key>
+        <string>/Users/YOUR_USERNAME/.qmd</string>
+        <key>QMD_ENGINE_DIR</key>
+        <string>/path/to/qmd-engine</string>
+        <key>QMD_VENV_PYTHON</key>
+        <string>/path/to/your/venv/bin/python3</string>
+        <key>QMD_DAEMON_LAUNCHD_LABEL</key>
+        <string>com.example.qmd-daemon</string>
+    </dict>
+
+    <key>StartCalendarInterval</key>
+    <dict>
+        <key>Hour</key>
+        <integer>4</integer>
+        <key>Minute</key>
+        <integer>0</integer>
+    </dict>
+
+    <key>StandardOutPath</key>
+    <string>/Users/YOUR_USERNAME/.qmd/logs/qmd-nightly.out</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/YOUR_USERNAME/.qmd/logs/qmd-nightly.err</string>
+</dict>
+</plist>
+<!--
+安装：
+  mkdir -p ~/.qmd/logs   # launchd 不会自动建 StandardOutPath/StandardErrorPath 所在目录
+  cp com.example.qmd-nightly.plist ~/Library/LaunchAgents/
+  launchctl load ~/Library/LaunchAgents/com.example.qmd-nightly.plist
+
+只做增量扫描，凌晨 4:00 跑一次。全量重建请人工前台触发（见 PITFALLS.md）。
+-->
