@@ -3,6 +3,13 @@
 All notable changes to this project are documented here.
 This project adheres to [Semantic Versioning](https://semver.org/).
 
+## [8.3.1] — 2026-07-30
+
+Public v8.3 maintenance patch: hardened fresh installs, exact Codex packaging,
+read-only health checks, session-path containment, private file modes,
+disposable self-tests, pinned QMD artifacts, and CI. No post-v8.3 or internal
+functionality is included. See `CHANGELOG-v8.3.1.md`.
+
 ## [0.1.0] — 2026-06-17
 
 First public release. **Shitcode Red-Light** — a PostToolUse hook that catches

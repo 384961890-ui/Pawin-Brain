@@ -19,8 +19,10 @@ import subprocess
 from datetime import datetime, date, timedelta
 from pathlib import Path
 
-HOME = Path.home()
-V2_DIR = HOME / '.claude-brain' / 'v2'
+BRAIN_DIR = Path(
+    os.environ.get('CLAUDE_BRAIN_DIR') or str(Path.home() / '.claude-brain')
+).expanduser()
+V2_DIR = BRAIN_DIR / 'v2'
 PENDING_REVIEW = V2_DIR / 'data/pending-review.json'
 AUDIT_LOG = V2_DIR / 'data/audit-log.jsonl'
 LOG_DIR = V2_DIR / 'logs'
@@ -33,6 +35,31 @@ MAX_EVALS_PER_NIGHT = 20
 SELF_DECEIT_THRESHOLD = 0.3
 
 
+def private_mkdir(path: Path):
+    relative = path.relative_to(BRAIN_DIR)
+    current = BRAIN_DIR
+    current.mkdir(parents=True, exist_ok=True, mode=0o700)
+    current.chmod(0o700)
+    for segment in relative.parts:
+        current = current / segment
+        current.mkdir(exist_ok=True, mode=0o700)
+        current.chmod(0o700)
+
+
+def private_open(path: Path, mode: str):
+    private_mkdir(path.parent)
+    flags = os.O_WRONLY | os.O_CREAT
+    flags |= os.O_APPEND if 'a' in mode else os.O_TRUNC
+    fd = os.open(path, flags, 0o600)
+    os.chmod(path, 0o600)
+    return os.fdopen(fd, mode, encoding='utf-8')
+
+
+def private_write_text(path: Path, content: str):
+    with private_open(path, 'w') as handle:
+        handle.write(content)
+
+
 def load_pending() -> dict:
     try:
         return json.loads(PENDING_REVIEW.read_text())
@@ -41,11 +68,11 @@ def load_pending() -> dict:
 
 
 def save_pending(data: dict):
-    PENDING_REVIEW.write_text(json.dumps(data, ensure_ascii=False, indent=2))
+    private_write_text(PENDING_REVIEW, json.dumps(data, ensure_ascii=False, indent=2))
 
 
 def append_audit(entry: dict):
-    with AUDIT_LOG.open('a') as f:
+    with private_open(AUDIT_LOG, 'a') as f:
         f.write(json.dumps(entry, ensure_ascii=False) + '\n')
 
 
@@ -84,9 +111,9 @@ def prioritize(items: list[dict]) -> list[dict]:
 
 
 def consolidate() -> dict:
-    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    private_mkdir(LOG_DIR)
     log_path = LOG_DIR / f'consolidate-{date.today().isoformat()}.log'
-    log_f = log_path.open('a')
+    log_f = private_open(log_path, 'a')
 
     def log(msg):
         line = f'[{datetime.now().isoformat()}] {msg}'
@@ -170,7 +197,7 @@ def consolidate() -> dict:
     # 高自欺事件写 lesson
     if high_self_deceit_events:
         lesson_path = LOG_DIR / f'self-deceit-{date.today().isoformat()}.md'
-        with lesson_path.open('a') as f:
+        with private_open(lesson_path, 'a') as f:
             f.write(f'\n## {datetime.now().strftime("%H:%M")} consolidate run\n\n')
             for ev in high_self_deceit_events:
                 f.write(f'### gap={ev["gap"]:.2f}\n')

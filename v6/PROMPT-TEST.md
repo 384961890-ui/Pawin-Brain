@@ -26,7 +26,7 @@
 | 2 | bigfile.js（850 行 const v1..v850） | 🚩 红灯 file_too_long 「这文件 850 行了…」 |
 | 3 | longfn.js（一个函数体里堆 100 行连续真代码） | 🚩 红灯 long_function 「第 N 行起 100 行代码堆没断开…」 |
 | 4 | messy.js（含 5 个 TODO/FIXME + 3 个 console.log） | 🚩 红灯（合并显示前两条 + "还有 1 处小问题先不打断你"） |
-| 5 | secret_real.js（含 apiKey: "sk-proj-realKey1234567890XYZ"） | 🚩 高优先红灯 🔴 密钥 —— 但**不阻断**，文件该还在 |
+| 5 | secret_real.js（运行时拼装一个仅用于检测的假密钥） | 🚩 高优先红灯 🔴 密钥 —— 但**不阻断**，文件该还在 |
 | 6 | secret_env.js（apiKey: process.env.X / "your-key-here" / "changeme"） | 🟢 静默（占位/env 不该误报） |
 | 7 | foo.test.js（含 2 个 console.log） | 🟢 静默（测试文件放宽 debug_leftover） |
 | 8 | 5 分钟内再 Edit 第 2 步的 bigfile.js（加一行注释） | 🟢 静默（throttle 节流生效） |

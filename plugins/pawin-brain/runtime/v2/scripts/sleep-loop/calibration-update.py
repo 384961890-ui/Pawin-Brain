@@ -22,12 +22,15 @@ calibration-update.py — 每周日 03:05 跑（cron 已配 nightly，可单独�
 """
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from collections import defaultdict
 
-HOME = Path.home()
-V2_DIR = HOME / '.claude-brain' / 'v2'
+BRAIN_DIR = Path(
+    os.environ.get('CLAUDE_BRAIN_DIR') or str(Path.home() / '.claude-brain')
+).expanduser()
+V2_DIR = BRAIN_DIR / 'v2'
 PENDING_REVIEW = V2_DIR / 'data/pending-review.json'
 CALIBRATION_JSON = V2_DIR / 'data/calibration.json'
 PATTERNS_MD = V2_DIR / 'data/PATTERNS.md'
@@ -39,6 +42,31 @@ MIN_SAMPLE_SIZE = 3
 
 # 滑动平均权重（旧值占比）
 OLD_WEIGHT = 0.5
+
+
+def private_mkdir(path: Path):
+    relative = path.relative_to(BRAIN_DIR)
+    current = BRAIN_DIR
+    current.mkdir(parents=True, exist_ok=True, mode=0o700)
+    current.chmod(0o700)
+    for segment in relative.parts:
+        current = current / segment
+        current.mkdir(exist_ok=True, mode=0o700)
+        current.chmod(0o700)
+
+
+def private_open(path: Path, mode: str):
+    private_mkdir(path.parent)
+    flags = os.O_WRONLY | os.O_CREAT
+    flags |= os.O_APPEND if 'a' in mode else os.O_TRUNC
+    fd = os.open(path, flags, 0o600)
+    os.chmod(path, 0o600)
+    return os.fdopen(fd, mode, encoding='utf-8')
+
+
+def private_write_text(path: Path, content: str):
+    with private_open(path, 'w') as handle:
+        handle.write(content)
 
 
 def load_pending() -> dict:
@@ -56,11 +84,11 @@ def load_existing_calibration() -> dict:
 
 
 def save_calibration(data: dict):
-    CALIBRATION_JSON.write_text(json.dumps(data, ensure_ascii=False, indent=2))
+    private_write_text(CALIBRATION_JSON, json.dumps(data, ensure_ascii=False, indent=2))
 
 
 def append_audit(entry: dict):
-    with AUDIT_LOG.open('a') as f:
+    with private_open(AUDIT_LOG, 'a') as f:
         f.write(json.dumps(entry, ensure_ascii=False) + '\n')
 
 
@@ -162,15 +190,15 @@ def update_patterns_md(new_calib: dict):
         # 没找到段 — 追加到末尾
         new_text = text.rstrip() + '\n\n---\n\n' + new_section
 
-    PATTERNS_MD.write_text(new_text)
+    private_write_text(PATTERNS_MD, new_text)
     return True
 
 
 def main():
-    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    private_mkdir(LOG_DIR)
     log_path = LOG_DIR / f'calibration-{datetime.now().date().isoformat()}.log'
 
-    with log_path.open('a') as log_f:
+    with private_open(log_path, 'a') as log_f:
         def log(msg):
             line = f'[{datetime.now().isoformat()}] {msg}'
             print(line)

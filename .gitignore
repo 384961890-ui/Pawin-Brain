@@ -1,5 +1,26 @@
-# runtime state — never commit
-state/
+# runtime data — never commit
+#
+# Claude/ZCode historically supported cloning this repository directly to
+# ~/.claude-brain. Keep these anchored exclusions as a second safety net even
+# though new installs separate source code from the user's Brain data.
+/IDENTITY.md
+/STATE.md
+/last_activity.json
+/lessons/
+/memory/
+/diary/
+/v2/data/
+/v2/logs/
+/v3/stuck-flag.json
+/v4/last-trigger.json
+/v5/ingested/
+/v6/state/
+/v6/loop-worklog/
+/zcode-shim/sessions/
+/qmd/index/
+/state/
+/*.tmp.*
+/**/*.tmp.*
 *.log
 
 # user's own config (ship config.example.json instead)

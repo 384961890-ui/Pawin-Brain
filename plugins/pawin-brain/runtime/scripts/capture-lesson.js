@@ -29,6 +29,20 @@ try { efficacyMod = require('./efficacy.js'); } catch {}
 
 const config = loadConfig();
 
+function sanitizeSessionId(value) {
+  return String(value || 'unknown')
+    .replace(/[^a-zA-Z0-9._-]/g, '_')
+    .slice(0, 160) || 'unknown';
+}
+
+function appendPrivate(file, content) {
+  const directory = path.dirname(file);
+  fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+  if (process.platform !== 'win32') fs.chmodSync(directory, 0o700);
+  fs.appendFileSync(file, content, { mode: 0o600 });
+  if (process.platform !== 'win32') fs.chmodSync(file, 0o600);
+}
+
 // 纠正信号分四类（trigger 字段的取值来源）
 // 检测顺序：false_success > abandon > explicit > implicit
 // （false_success 优先级最高：谎报成功比"放弃纠正"更严重——不只是没改好，是骗了人）
@@ -88,7 +102,7 @@ process.stdin.on('data', c => stdinData += c);
 process.stdin.on('end', () => {
   try {
     const input = stdinData.trim() ? JSON.parse(stdinData) : {};
-    const sessionId = input.session_id || 'unknown';
+    const sessionId = sanitizeSessionId(input.session_id);
     const transcriptPath = input.transcript_path;
 
     if (!transcriptPath || !fs.existsSync(transcriptPath)) {
@@ -131,7 +145,7 @@ process.stdin.on('end', () => {
         try { lastRun = fs.statSync(throttle).mtimeMs; } catch {}
         if (now - lastRun > 24 * 3600 * 1000) {
           const r = decayMod.decay(path.join(BRAIN_DIR, 'lessons/INDEX.json'));
-          fs.writeFileSync(throttle, ''); // touch mtime
+          writeFileAtomic(throttle, ''); // touch mtime
           if (r.to_cooling + r.to_archive > 0) {
             debugLog(config, `decay: cooling=${r.to_cooling} archive=${r.to_archive}`);
           }
@@ -246,7 +260,7 @@ function scanForLesson(transcriptPath, sessionId) {
  */
 function getActivatedLessonIds(sessionId) {
   try {
-    const p = path.join(BRAIN_DIR, 'state', `activated-${sessionId}.json`);
+    const p = path.join(BRAIN_DIR, 'state', `activated-${sanitizeSessionId(sessionId)}.json`);
     const parsed = JSON.parse(readFileSafe(p, '[]'));
     return Array.isArray(parsed) ? parsed : [];
   } catch {
@@ -331,7 +345,7 @@ function detectConflicts(existingLessons, newId, title, summary, opts = {}) {
       old_ids: hits.map(h => h.id),
       score: hits.map(h => +h.score.toFixed(2))
     }) + '\n';
-    fs.appendFileSync(queuePath, line);
+    appendPrivate(queuePath, line);
   } catch (e) {
     debugLog(config, 'conflict-queue append error:', e.message);
   }
@@ -590,7 +604,7 @@ ${lesson.raw_signal}
 ---
 `;
   try {
-    fs.appendFileSync(monthFile, block);
+    appendPrivate(monthFile, block);
   } catch (e) {
     debugLog(config, 'failed to append month file:', e.message);
     return;

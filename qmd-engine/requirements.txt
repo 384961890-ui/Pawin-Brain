@@ -1,0 +1,6 @@
+# Version-pinned direct CPU dependencies for Python 3.11/3.12.
+# GPU/Metal builds may use the same llama-cpp-python version with platform-
+# specific CMAKE_ARGS; keep the version pinned so the Python API does not drift.
+# This is not a complete transitive --require-hashes lock across platforms.
+llama-cpp-python==0.3.34
+numpy==1.26.4

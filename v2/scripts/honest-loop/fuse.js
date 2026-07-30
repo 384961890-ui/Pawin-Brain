@@ -26,9 +26,13 @@
 
 const { spawnSync } = require('child_process');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
-const V2_DIR = path.join(process.env.HOME, '.claude-brain/v2');
+const BRAIN_DIR = path.resolve(
+  process.env.CLAUDE_BRAIN_DIR || path.join(os.homedir(), '.claude-brain')
+);
+const V2_DIR = path.join(BRAIN_DIR, 'v2');
 const PATTERNS_PATH = path.join(V2_DIR, 'data/PATTERNS.md');
 const AUDIT_LOG = path.join(V2_DIR, 'data/audit-log.jsonl');
 

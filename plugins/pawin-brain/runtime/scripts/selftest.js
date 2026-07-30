@@ -2,7 +2,8 @@
 // selftest.js — Claude Brain · Shitcode Red-Light regression suite.
 // Generates fixtures → runs smell-check.js end-to-end → asserts.
 // Driven by Node (not shell) to avoid multi-line parsing issues.
-// Temporarily flips enabled:true for the test run, then restores the original.
+// Runs against a disposable Brain root. It never edits the user's live config,
+// throttle state, or report files.
 
 'use strict';
 const fs = require('fs');
@@ -10,23 +11,19 @@ const os = require('os');
 const path = require('path');
 const { execFileSync } = require('child_process');
 
-const DIR = path.join(os.tmpdir(), 'brain-selftest');
-fs.rmSync(DIR, { recursive: true, force: true });
-fs.mkdirSync(DIR, { recursive: true });
-
-const BRAIN = process.env.BRAIN_DIR || path.join(os.homedir(), '.claude-brain');
+const DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'brain-selftest-'));
+const BRAIN = path.join(DIR, 'brain-data');
 const HOOK = path.join(__dirname, 'smell-check.js');
 const CONFIG = path.join(BRAIN, 'config.json');
 const THROTTLE = path.join(BRAIN, 'state/throttle.json');
 
-// Force enabled:true during the test (save original, restore at the end)
-const origConfig = fs.existsSync(CONFIG) ? fs.readFileSync(CONFIG, 'utf-8') : '{}';
-const testCfg = JSON.parse(origConfig);
+const example = path.join(__dirname, '..', 'config.example.json');
+const testCfg = fs.existsSync(example)
+  ? JSON.parse(fs.readFileSync(example, 'utf8'))
+  : {};
 testCfg.enabled = true;
 fs.mkdirSync(BRAIN, { recursive: true });
-fs.writeFileSync(CONFIG, JSON.stringify(testCfg, null, 2));
-
-function restore() { fs.writeFileSync(CONFIG, origConfig); }
+fs.writeFileSync(CONFIG, JSON.stringify(testCfg, null, 2), { mode: 0o600 });
 
 // ── fixtures ──
 const W = (name, content) => fs.writeFileSync(path.join(DIR, name), content);
@@ -35,8 +32,10 @@ W('clean.js', `'use strict';\nfunction add(a, b) { return a + b; }\nmodule.expor
 
 W('doc.md', `# Title\nProse text, any length — should never be touched by the shitcode check.\n`);
 
-// real secret → soft injection (no longer block)
-W('secret_real.js', `const config = {\n  apiKey: "sk-proj-abcdefghij1234567890XYZ",\n};\nmodule.exports = config;\n`);
+// Secret-shaped synthetic fixture is assembled at runtime so repository
+// scanners never have to distinguish a test token from a real credential.
+const syntheticSecret = ['sk', 'proj', 'abcdefghij1234567890XYZ'].join('-');
+W('secret_real.js', `const config = {\n  apiKey: "${syntheticSecret}",\n};\nmodule.exports = config;\n`);
 
 // placeholder / env → must NOT false-positive
 W('secret_placeholder.js', `const a = "your-password-here";\nconst b = process.env.API_KEY;\nconst c = "changeme";\nmodule.exports = { a, b, c };\n`);
@@ -60,7 +59,15 @@ function run(file) {
   try { fs.rmSync(THROTTLE, { force: true }); } catch {}
   const payload = JSON.stringify({ tool_name: 'Write', tool_input: { file_path: path.join(DIR, file) } });
   try {
-    return execFileSync('node', [HOOK], { input: payload, encoding: 'utf-8' }).trim();
+    return execFileSync(process.execPath, [HOOK], {
+      input: payload,
+      encoding: 'utf-8',
+      env: {
+        ...process.env,
+        BRAIN_DIR: BRAIN,
+        CLAUDE_BRAIN_DIR: BRAIN
+      }
+    }).trim();
   } catch (e) {
     return '(execution error: ' + e.message + ')';
   }
@@ -89,8 +96,6 @@ for (const [file, expect, assert] of cases) {
 }
 report.unshift(`Result: ${pass}/${cases.length} PASS`, '');
 
-restore();
-const reportPath = path.join(BRAIN, 'state/selftest-report.md');
-fs.mkdirSync(path.dirname(reportPath), { recursive: true });
-fs.writeFileSync(reportPath, report.join('\n'));
+const reportPath = path.join(DIR, 'selftest-report.md');
+fs.writeFileSync(reportPath, report.join('\n'), { mode: 0o600 });
 process.stdout.write(`${pass}/${cases.length} PASS -> ${reportPath}\n`);

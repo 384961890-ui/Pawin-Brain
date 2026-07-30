@@ -11,6 +11,7 @@ const test = require('node:test');
 const ROOT = path.resolve(__dirname, '../..');
 const PLUGIN = path.join(ROOT, 'plugins/pawin-brain');
 const ROUTER = path.join(PLUGIN, 'scripts/codex-hook-router.js');
+const BOOTSTRAP = path.join(PLUGIN, 'scripts/bootstrap-runtime.js');
 
 function json(file) {
   return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -18,6 +19,12 @@ function json(file) {
 
 function sha256(file) {
   return crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+}
+
+function temporaryHome(t, prefix) {
+  const home = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  t.after(() => fs.rmSync(home, { recursive: true, force: true }));
+  return home;
 }
 
 function runRouter(mode, payload, home) {
@@ -35,13 +42,13 @@ function runRouter(mode, payload, home) {
   });
 }
 
-test('marketplace and plugin expose the Codex v8.3 host', () => {
+test('marketplace and plugin expose the Codex v8.3.1 host', () => {
   const marketplace = json(path.join(ROOT, '.agents/plugins/marketplace.json'));
   const manifest = json(path.join(PLUGIN, '.codex-plugin/plugin.json'));
   const hooks = json(path.join(PLUGIN, 'hooks/hooks.json')).hooks;
   assert.equal(marketplace.name, 'pawin-brain');
   assert.equal(marketplace.plugins[0].source.path, './plugins/pawin-brain');
-  assert.equal(manifest.version, '8.3.0');
+  assert.equal(manifest.version, '8.3.1');
   for (const event of [
     'SessionStart',
     'UserPromptSubmit',
@@ -76,9 +83,9 @@ test('the published config seed is not ignored by git', () => {
   assert.equal(result.status, 1, result.stderr);
 });
 
-test('bundled runtime is byte-identical to its public v8.3 sources', () => {
+test('bundled runtime is byte-identical to its public v8.3.1 sources', () => {
   const manifest = json(path.join(PLUGIN, 'runtime-manifest.json'));
-  assert.equal(manifest.baseline, 'Brain v8.3 public final');
+  assert.equal(manifest.baseline, 'Brain v8.3.1 public hardening');
   assert.ok(manifest.files.length > 80);
   for (const entry of manifest.files) {
     const source = path.join(ROOT, entry.path);
@@ -88,8 +95,8 @@ test('bundled runtime is byte-identical to its public v8.3 sources', () => {
   }
 });
 
-test('bootstrap creates generic data once and preserves user data', () => {
-  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pawin-brain-bootstrap-'));
+test('bootstrap creates generic data once and preserves user data', t => {
+  const home = temporaryHome(t, 'pawin-brain-bootstrap-');
   const brain = path.join(home, '.claude-brain');
   fs.mkdirSync(brain, { recursive: true });
   fs.writeFileSync(path.join(brain, 'IDENTITY.md'), '# My identity\nkeep me\n');
@@ -106,8 +113,47 @@ test('bootstrap creates generic data once and preserves user data', () => {
   assert.match(fs.readFileSync(path.join(brain, 'STATE.md'), 'utf8'), /DO NOT OVERWRITE/);
 });
 
-test('UserPromptSubmit injects Codex identity, state, and Brain context', () => {
-  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pawin-brain-prompt-'));
+test('bootstrap rejects a physical alias to HOME but allows a legitimate symlinked ancestor', t => {
+  const sandbox = temporaryHome(t, 'pawin-brain-physical-path-');
+  const home = path.join(sandbox, 'physical-home');
+  fs.mkdirSync(home);
+  const alias = path.join(sandbox, 'alias');
+  fs.symlinkSync(sandbox, alias, 'dir');
+  const aliasedHome = path.join(alias, 'physical-home');
+
+  const rejected = spawnSync(process.execPath, [BOOTSTRAP], {
+    env: {
+      ...process.env,
+      HOME: home,
+      CLAUDE_BRAIN_DIR: aliasedHome
+    },
+    encoding: 'utf8',
+    timeout: 10000
+  });
+  assert.notEqual(rejected.status, 0);
+  assert.match(rejected.stderr, /unsafe Brain directory/i);
+  assert.deepEqual(fs.readdirSync(home), []);
+
+  const physicalParent = path.join(sandbox, 'physical-parent');
+  const linkedParent = path.join(sandbox, 'linked-parent');
+  fs.mkdirSync(physicalParent);
+  fs.symlinkSync(physicalParent, linkedParent, 'dir');
+  const allowedBrain = path.join(linkedParent, 'brain');
+  const allowed = spawnSync(process.execPath, [BOOTSTRAP], {
+    env: {
+      ...process.env,
+      HOME: home,
+      CLAUDE_BRAIN_DIR: allowedBrain
+    },
+    encoding: 'utf8',
+    timeout: 10000
+  });
+  assert.equal(allowed.status, 0, allowed.stderr || allowed.stdout);
+  assert.ok(fs.existsSync(path.join(physicalParent, 'brain', 'IDENTITY.md')));
+});
+
+test('UserPromptSubmit injects Codex identity, state, and Brain context', t => {
+  const home = temporaryHome(t, 'pawin-brain-prompt-');
   runRouter('session-start', {}, home);
   const brain = path.join(home, '.claude-brain');
   fs.writeFileSync(path.join(brain, 'IDENTITY.md'), '# Test identity\nRemember this voice.\n');
@@ -123,8 +169,52 @@ test('UserPromptSubmit injects Codex identity, state, and Brain context', () => 
   assert.match(output.hookSpecificOutput.additionalContext, /<brain-context>/);
 });
 
-test('tool events collect v8 behavior metrics and sanitize session ids', () => {
-  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pawin-brain-tools-'));
+test('Codex hook stays fail-open but makes bootstrap failures visible', t => {
+  const home = temporaryHome(t, 'pawin-brain-failure-');
+  const result = spawnSync(process.execPath, [ROUTER, 'user-prompt'], {
+    input: JSON.stringify({
+      session_id: 'failure-test',
+      prompt: '实现一个本地记忆功能'
+    }),
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      HOME: home,
+      CLAUDE_BRAIN_DIR: home,
+      PLUGIN_ROOT: PLUGIN,
+      CLAUDE_PLUGIN_ROOT: PLUGIN
+    },
+    timeout: 30000
+  });
+  assert.equal(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.hookSpecificOutput.hookEventName, 'UserPromptSubmit');
+  assert.match(output.hookSpecificOutput.additionalContext, /不会假装记忆已加载/);
+  assert.equal(fs.existsSync(path.join(home, 'IDENTITY.md')), false);
+});
+
+test('Codex hook exposes a dangling seed symlink as a bootstrap failure', t => {
+  const home = temporaryHome(t, 'pawin-brain-dangling-seed-');
+  const brain = path.join(home, '.claude-brain');
+  fs.mkdirSync(brain);
+  const external = path.join(home, 'missing-external-identity.md');
+  fs.symlinkSync(external, path.join(brain, 'IDENTITY.md'));
+
+  const result = runRouter('user-prompt', {
+    session_id: 'dangling-seed',
+    prompt: '检查 Brain'
+  }, home);
+
+  assert.equal(result.status, 0, result.stderr);
+  const output = JSON.parse(result.stdout);
+  assert.equal(output.hookSpecificOutput.hookEventName, 'UserPromptSubmit');
+  assert.match(output.hookSpecificOutput.additionalContext, /不会假装记忆已加载/);
+  assert.equal(fs.lstatSync(path.join(brain, 'IDENTITY.md')).isSymbolicLink(), true);
+  assert.equal(fs.existsSync(external), false);
+});
+
+test('tool events collect v8 behavior metrics and sanitize session ids', t => {
+  const home = temporaryHome(t, 'pawin-brain-tools-');
   const result = runRouter('tool', {
     sessionId: '../../unsafe/session',
     toolUse: { name: 'Write', input: { file_path: '/tmp/example.js' } }
@@ -148,8 +238,8 @@ test('tool events collect v8 behavior metrics and sanitize session ids', () => {
   assert.equal(updated.validation_count, 1);
 });
 
-test('Codex apply_patch is counted as a write and exposes changed files to v6', () => {
-  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pawin-brain-patch-'));
+test('Codex apply_patch is counted as a write and exposes changed files to v6', t => {
+  const home = temporaryHome(t, 'pawin-brain-patch-');
   const source = path.join(home, 'sample.js');
   fs.writeFileSync(source, 'const value = 1;\n');
   const result = runRouter('tool', {
@@ -164,8 +254,8 @@ test('Codex apply_patch is counted as a write and exposes changed files to v6', 
   assert.equal(state.first_write_step, 1);
 });
 
-test('Stop uses Codex transcript fields and updates durable state', () => {
-  const home = fs.mkdtempSync(path.join(os.tmpdir(), 'pawin-brain-stop-'));
+test('Stop uses Codex transcript fields and updates durable state', t => {
+  const home = temporaryHome(t, 'pawin-brain-stop-');
   runRouter('session-start', {}, home);
   const rollout = path.join(home, 'rollout.jsonl');
   fs.writeFileSync(rollout, [
@@ -196,13 +286,72 @@ test('Stop uses Codex transcript fields and updates durable state', () => {
   assert.doesNotMatch(state, /first run/);
 });
 
-test('public additions contain no local identity or private v9 paths', () => {
+test('Codex transcript conversion reads only a bounded regular-file tail', t => {
+  const sandbox = temporaryHome(t, 'pawin-brain-rollout-tail-');
+  const rollout = path.join(sandbox, 'rollout.jsonl');
+  const old = JSON.stringify({
+    type: 'response_item',
+    payload: {
+      type: 'message',
+      role: 'user',
+      content: [{ type: 'input_text', text: 'old row must be outside the tail' }]
+    }
+  });
+  const recent = JSON.stringify({
+    type: 'response_item',
+    payload: {
+      type: 'message',
+      role: 'assistant',
+      content: [{ type: 'output_text', text: 'recent bounded row' }]
+    }
+  });
+  const descriptor = fs.openSync(rollout, 'w');
+  try {
+    fs.writeSync(descriptor, `${old}\n`);
+    fs.writeSync(descriptor, Buffer.alloc(5 * 1024 * 1024, 0x78));
+    fs.writeSync(descriptor, `\n${recent}\n`);
+  } finally {
+    fs.closeSync(descriptor);
+  }
+
+  const router = require(ROUTER);
+  const lines = router.responseItemLines(rollout);
+  assert.equal(lines.length, 1);
+  assert.match(lines[0], /recent bounded row/);
+  assert.doesNotMatch(lines[0], /old row/);
+
+  const external = path.join(sandbox, 'external.jsonl');
+  fs.writeFileSync(external, `${recent}\n`);
+  const link = path.join(sandbox, 'rollout-link.jsonl');
+  fs.symlinkSync(external, link);
+  assert.equal(router.transcriptCandidate({ transcript_path: link }), null);
+  assert.deepEqual(router.responseItemLines(link), []);
+});
+
+test('Codex transcript temp files live in a private unique directory', t => {
+  const router = require(ROUTER);
+  const temporary = router.buildTranscript({
+    messages: [{ role: 'user', content: 'private message' }]
+  });
+  t.after(() => fs.rmSync(temporary.directory, { recursive: true, force: true }));
+  assert.equal(fs.statSync(temporary.directory).mode & 0o777, 0o700);
+  assert.equal(fs.statSync(temporary.file).mode & 0o777, 0o600);
+  assert.equal(path.dirname(temporary.file), temporary.directory);
+  assert.match(path.basename(temporary.directory), /^pawin-brain-codex-/);
+});
+
+test('public additions contain no private v9 paths or injected release-denylist terms', () => {
+  const injectedTerms = String(process.env.PAWIN_RELEASE_DENYLIST || '')
+    .split('\n')
+    .map(value => value.trim())
+    .filter(Boolean);
   const forbidden = [
-    new RegExp(['Users', 'a1234'].join('/'), 'i'),
-    new RegExp(['wang', 'tian', 'rui'].join(''), 'i'),
-    new RegExp(['PAWMI', 'GROWING', 'UP'].join('-'), 'i'),
     new RegExp(['\\.claude-brain', 'v9'].join('/'), 'i'),
-    new RegExp(['private', 'brain'].join('[-_ ]?'), 'i')
+    new RegExp(['private', 'brain'].join('[-_ ]?'), 'i'),
+    ...injectedTerms.map(term => new RegExp(
+      term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+      'i'
+    ))
   ];
   const roots = [
     path.join(ROOT, '.agents'),

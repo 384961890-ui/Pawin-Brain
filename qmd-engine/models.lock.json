@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "models": [
+    {
+      "name": "Qwen3-Embedding-4B-Q8_0",
+      "repository": "Qwen/Qwen3-Embedding-4B-GGUF",
+      "revision": "f4602530db1d980e16da9d7d3a70294cf5c190be",
+      "filename": "Qwen3-Embedding-4B-Q8_0.gguf",
+      "size": 4279660224,
+      "sha256": "b60ae5ce2dd6a0b77f82cadf21def1f310a3e10cde380ad0081b07a9d416949d",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "Qwen3-Reranker-0.6B-Q8_0",
+      "repository": "ggml-org/Qwen3-Reranker-0.6B-Q8_0-GGUF",
+      "revision": "a02f48bb4f057028298c21fa033da2b30d7742d5",
+      "filename": "qwen3-reranker-0.6b-q8_0.gguf",
+      "size": 639153184,
+      "sha256": "22c9979ce4fbcdc5acdc310c6641c32797eff1aa980b8f7a2db8a8ea23429a48",
+      "license": "Apache-2.0"
+    }
+  ]
+}

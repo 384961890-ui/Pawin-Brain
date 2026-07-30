@@ -1,0 +1,80 @@
+# Pawin Brain public v8.3.1 handoff
+
+## Current status
+
+- Delivery branch: `fix/v83-public-hardening-20260730`
+- Source baseline: public `main` at `6e83aa8bfea8485f520710ce150b25f0a0985eeb`
+- Delivery commit: use the branch tip containing this handoff
+- Scope: maintenance and distribution hardening for the public v8.3 feature
+  line only; no private v9 source or runtime data is included
+- Release state: review branch only; not merged, tagged, or released
+
+## This increment
+
+- Separated executable source from user data for new Claude Code and ZCode
+  installs while retaining protected legacy clone-as-runtime compatibility.
+- Repaired fresh, repeated, custom-path, and uninstall behavior for Claude Code,
+  Codex, and ZCode host adapters.
+- Contained session-derived paths, enforced private runtime permissions, and
+  moved Stop-hook transcripts into unique private temp directories that are
+  removed on every exit path.
+- Made Codex rollout conversion read only a bounded regular-file tail.
+- Made ZCode runtime-file replacement transactional, added exact uninstall
+  ownership, allowed legitimate system-level symlink ancestors, and rejected
+  symlinks inside the Brain tree.
+- Replaced recursive Codex packaging with an exact reviewed allowlist and
+  manifest validation.
+- Made the Codex doctor read-only, exact about hook contracts, and hostile to
+  runtime/data/router symlink substitution; fail-open hook failures are visible.
+- Isolated both self-test suites from live Brain data.
+- Pinned QMD direct dependency versions; locked model revisions, sizes, and
+  SHA-256 digests; and added an offline model verifier.
+- Added SHA-pinned CI and regression coverage for installation, rollback,
+  packaging, path containment, permissions, data isolation, hook budgets, and
+  public-content safety.
+
+## Verification evidence
+
+The following checks passed after rebuilding the generated Codex runtime:
+
+```text
+node --test tests/claude/*.test.js tests/codex/*.test.js \
+  tests/security/*.test.js tests/selftest/*.test.js tests/zcode/*.test.js
+
+69 tests passed; 0 failed
+```
+
+Additional release gates:
+
+- all tracked JavaScript sources parse with `node --check`
+- all tracked shell sources parse with `bash -n` or `sh -n` as appropriate
+- QMD and v2/v6 Python sources parse successfully with the Python AST parser
+- JSON manifests, the runtime allowlist, and the QMD model lock parse
+- `git diff --check` passes
+- generated runtime contains exactly 97 allowlisted public files
+- rebuilding the generated runtime twice is byte-stable
+- public-content scans find no personal machine path, credential shape, runtime
+  data, private v9 path, or unreviewed runtime file
+
+## Not completed
+
+- The branch still needs remote fresh-clone verification and pull-request CI.
+- An older public remote branch contains post-v8.3 design material and two
+  user-specific absolute-path fixtures. Its exact name and sanitized evidence
+  are recorded in the private release audit. Deleting or rewriting that remote
+  branch is outside this repair and requires explicit owner approval.
+- Rewriting historical author metadata is outside this repair and requires
+  explicit owner approval.
+- QMD's direct Python packages are version-pinned, but the complete transitive
+  Python build graph is not hash-locked across platforms. Model artifacts are
+  independently hash-locked.
+- ZCode rolls runtime-file replacements back after a later configuration
+  failure. Generic seed data and directories created by the bootstrap are
+  intentionally retained, so installation is not a whole-tree transaction.
+- An immutable `v8.3.1` tag and release must wait for review and merge approval.
+
+## Next step
+
+Review and merge the pull request after CI passes. Then create the `v8.3.1`
+tag from the merged public `main` commit and run the same suite from a clean
+clone of that tag.
