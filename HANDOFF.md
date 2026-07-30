@@ -8,7 +8,8 @@
 - Verified code merge: `f9c2649673ecf1d61db66df91fd849a84291e91f`
 - Scope: maintenance and distribution hardening for the public v8.3 feature
   line only; no private v9 source or runtime data is included
-- Release state: merged into public `main`; not tagged or released
+- Release state: published as
+  [`v8.3.1`](https://github.com/384961890-ui/Pawin-Brain/releases/tag/v8.3.1)
 
 ## Repository workflow
 
@@ -72,6 +73,10 @@ Additional release gates:
   `f9c2649673ecf1d61db66df91fd849a84291e91f`, reported plugin version `8.3.1`,
   passed 69/69, rebuilt the 97-file runtime, and remained Git-clean
 - the post-merge `main` workflow run `30554916369` completed successfully
+- annotated tag `v8.3.1` peels to
+  `91dc130a7f12886d521f92b2804fdf3f08958234`
+- a clean clone of `v8.3.1` reported plugin version `8.3.1`, passed 69/69,
+  rebuilt the 97-file runtime byte-for-byte, and remained Git-clean
 
 ## Not completed
 
@@ -87,11 +92,8 @@ Additional release gates:
 - ZCode rolls runtime-file replacements back after a later configuration
   failure. Generic seed data and directories created by the bootstrap are
   intentionally retained, so installation is not a whole-tree transaction.
-- The immutable `v8.3.1` tag and GitHub Release have not been created and still
-  require explicit owner approval.
-
 ## Next step
 
-After explicit owner approval, create the `v8.3.1` tag and GitHub Release from
-the verified public `main`, then run the same suite from a clean clone of that
-tag.
+Keep `v8.3.1` immutable. Future verified public maintenance can continue on
+`main`; any later version tag or GitHub Release still requires explicit owner
+approval.
