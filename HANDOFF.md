@@ -3,6 +3,7 @@
 ## Current status
 
 - Delivery branch: `fix/v83-public-hardening-20260730`
+- Pull request: <https://github.com/384961890-ui/Pawin-Brain/pull/3>
 - Source baseline: public `main` at `6e83aa8bfea8485f520710ce150b25f0a0985eeb`
 - Delivery commit: use the branch tip containing this handoff
 - Scope: maintenance and distribution hardening for the public v8.3 feature
@@ -55,10 +56,13 @@ Additional release gates:
 - rebuilding the generated runtime twice is byte-stable
 - public-content scans find no personal machine path, credential shape, runtime
   data, private v9 path, or unreviewed runtime file
+- a fresh clone of the remote delivery branch passed the same 69-test suite,
+  rebuilt all 97 runtime files byte-for-byte, and remained Git-clean
+- pull-request CI passed on both Node.js 20 and Node.js 22 for code commit
+  `4ee7ad9e72dd8a988330dadc374627d98fd39fdf`
 
 ## Not completed
 
-- The branch still needs remote fresh-clone verification and pull-request CI.
 - An older public remote branch contains post-v8.3 design material and two
   user-specific absolute-path fixtures. Its exact name and sanitized evidence
   are recorded in the private release audit. Deleting or rewriting that remote
@@ -75,6 +79,6 @@ Additional release gates:
 
 ## Next step
 
-Review and merge the pull request after CI passes. Then create the `v8.3.1`
-tag from the merged public `main` commit and run the same suite from a clean
-clone of that tag.
+Review the pull request and merge only after owner approval. Then create the
+`v8.3.1` tag from the merged public `main` commit and run the same suite from a
+clean clone of that tag.
