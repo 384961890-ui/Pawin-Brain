@@ -2,13 +2,21 @@
 
 ## Current status
 
-- Delivery branch: `fix/v83-public-hardening-20260730`
-- Pull request: <https://github.com/384961890-ui/Pawin-Brain/pull/3>
+- Delivery branch: public `main`
+- Pull request: <https://github.com/384961890-ui/Pawin-Brain/pull/3> (merged)
 - Source baseline: public `main` at `6e83aa8bfea8485f520710ce150b25f0a0985eeb`
-- Delivery commit: use the branch tip containing this handoff
+- Verified code merge: `f9c2649673ecf1d61db66df91fd849a84291e91f`
 - Scope: maintenance and distribution hardening for the public v8.3 feature
   line only; no private v9 source or runtime data is included
-- Release state: review branch only; not merged, tagged, or released
+- Release state: merged into public `main`; not tagged or released
+
+## Repository workflow
+
+- The owner authorized future verified public maintenance increments for this
+  repository to push directly to `main` after tests, privacy checks, and remote
+  confirmation.
+- Tags, GitHub Releases, repository visibility changes, and production
+  publication still require explicit owner approval.
 
 ## This increment
 
@@ -60,6 +68,10 @@ Additional release gates:
   rebuilt all 97 runtime files byte-for-byte, and remained Git-clean
 - pull-request CI passed on both Node.js 20 and Node.js 22 for code commit
   `4ee7ad9e72dd8a988330dadc374627d98fd39fdf`
+- after merge, a fresh default clone of public `main` resolved to
+  `f9c2649673ecf1d61db66df91fd849a84291e91f`, reported plugin version `8.3.1`,
+  passed 69/69, rebuilt the 97-file runtime, and remained Git-clean
+- the post-merge `main` workflow run `30554916369` completed successfully
 
 ## Not completed
 
@@ -75,10 +87,11 @@ Additional release gates:
 - ZCode rolls runtime-file replacements back after a later configuration
   failure. Generic seed data and directories created by the bootstrap are
   intentionally retained, so installation is not a whole-tree transaction.
-- An immutable `v8.3.1` tag and release must wait for review and merge approval.
+- The immutable `v8.3.1` tag and GitHub Release have not been created and still
+  require explicit owner approval.
 
 ## Next step
 
-Review the pull request and merge only after owner approval. Then create the
-`v8.3.1` tag from the merged public `main` commit and run the same suite from a
-clean clone of that tag.
+After explicit owner approval, create the `v8.3.1` tag and GitHub Release from
+the verified public `main`, then run the same suite from a clean clone of that
+tag.
