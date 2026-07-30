@@ -75,13 +75,14 @@ Brain 的价值不在于让第 1 次 session 更好
 
 ---
 
-This is the final, complete, open release of Brain. Everything is here.
-There will be no further open-source releases — not because we are done
-building, but because what comes next is built *on top of* what you are
-looking at. This repository is the foundation, released whole.
+v8.3 is the final, complete public **feature line** of Brain. Everything in
+that public foundation is here. Maintenance patches such as v8.3.1 may repair
+installers, packaging, privacy, or reliability, but do not publish later
+internal feature lines.
 
-这是 Brain 的最终完整开源版。全部都在这里。此后不再有开源更新
-不是因为我们停止了构建 而是因为接下来的东西建立在你眼前这些之上。这个仓库是地基 完整交付。
+v8.3 是 Brain 最终完整的公开**功能线**。这份公开地基完整交付。
+v8.3.1 这类维护补丁只修安装、打包、隐私和可靠性，不会把后续私有 Brain
+功能线带进来。
 
 ---
 
@@ -117,13 +118,13 @@ a graph you do not own.
 
 ## What ships · 交付内容
 
-**Version: 8.3 — the final release.**
+**Version: 8.3.1 — hardened maintenance revision of the final public v8.3 line.**
 
 | Package | What it is |
 |:---|:---|
-| **Claude Code edition** (repository root) | The canonical public v8.3 hooks and runtime. |
-| **Codex edition** (`plugins/pawin-brain/`) | A native Codex plugin with the same public v8.3 context injection, behavior telemetry, cognitive loops, structured memory, graph recall, and QMD path. |
-| **ZCode edition** (`zcode-shim/`) | The lightweight host adapter for ZCode, sharing the same Brain data and public v8.3 runtime. |
+| **Claude Code edition** (repository root) | The canonical public v8.3.1 hooks and runtime. |
+| **Codex edition** (`plugins/pawin-brain/`) | A native Codex plugin with the same public v8.3.1 context injection, behavior telemetry, cognitive loops, structured memory, graph recall, and QMD path. |
+| **ZCode edition** (`zcode-shim/`) | The lightweight host adapter for ZCode, sharing the same Brain data and public v8.3.1 runtime. |
 | **`memory-spec/`** | The structured-memory standard: three-layer index tree, dual-section records (current conclusion + append-only history = a file-native temporal knowledge graph), six memory types, wikilink graph layer, write-time gate, nightly gardener. Templates and four runnable scripts. |
 | **`qmd-engine/`** | Local semantic retrieval: embedding recall + reranker, resident daemon, atomic index rebuild, health checks. Off-the-shelf open models (Qwen3-Embedding-4B, Qwen3-Reranker-0.6B) — we trained nothing; we engineered everything around them. `PITFALLS.md` documents the incidents that paid for that engineering. |
 | **Core loops** (`v2/`–`v6/`) | Hook-based orthogonal loops that discipline LLM instincts. Each loop targets one instinct; none replaces another. See the evolution table below. |
@@ -145,7 +146,8 @@ Brain 不是一次设计出来的。每一版都在治一个真实观察到的�
 | **v7 · lesson lifecycle** | Old lessons accumulating into noise. Adds decay, archival, and rejection so the lesson set stays sharp instead of monotonically growing. | `scripts/decay-lessons.js`, `scripts/archive-rejected.js` |
 | **v8 · efficacy attribution** | *"Which of these lessons is actually working?"* A per-session behavior score gets attributed back to the lessons that were injected in that session — the first mechanism here that closes the loop between injection and outcome, not just injection and time. | `scripts/efficacy.js`, `scripts/track-behavior.js`, `scripts/analyze-behavior.js` |
 | **v8.1 · unified sanitized release** | The first attempt at a public, personally-scrubbed release of v2–v8. Later found to be incomplete — see v8.3. | git history from June 2026 |
-| **v8.2 → v8.3 · Graph engineering, released whole** | The gap that v8.1 left behind: the structured-memory standard we assumed "everyone would figure out," the local retrieval engine we assumed was too specific to share, and one-hop graph-aware recall. `memory-spec/` + `qmd-engine/` + `scripts/link-expand.js`. **Released whole; this is the final open release.** | This commit |
+| **v8.2 → v8.3 · Graph engineering, released whole** | The gap that v8.1 left behind: the structured-memory standard we assumed "everyone would figure out," the local retrieval engine we assumed was too specific to share, and one-hop graph-aware recall. `memory-spec/` + `qmd-engine/` + `scripts/link-expand.js`. **Released whole; this is the final public feature line.** | v8.3 history |
+| **v8.3.1 · Public hardening** | Repairs fresh installs, privacy boundaries, exact packaging, read-only health checks, path containment, version-pinned QMD dependencies, hash-verified model artifacts, and CI. No later internal features. | `CHANGELOG-v8.3.1.md` |
 
 ## What this is not · 这不是什么
 
@@ -183,33 +185,79 @@ Start a new Codex thread after installation. The first hook invocation creates
 generic local Brain files only when they are missing; it never overwrites your
 identity, state, lessons, or memory.
 
-Run a read-only health check at any time:
+Run a read-only health check at any time. It never creates or repairs data:
 
 ```bash
-node ~/.codex/plugins/cache/pawin-brain/pawin-brain/8.3.0/scripts/doctor.js
+node ~/.codex/plugins/cache/pawin-brain/pawin-brain/8.3.1/scripts/doctor.js
 ```
 
 ### Claude Code
 
 ```bash
-git clone https://github.com/384961890-ui/Pawin-Brain.git ~/.claude-brain
-bash ~/.claude-brain/install-hooks.sh
+git clone https://github.com/384961890-ui/Pawin-Brain.git \
+  ~/.local/share/pawin-brain
+CLAUDE_BRAIN_DIR="$HOME/.claude-brain" \
+  bash ~/.local/share/pawin-brain/install-hooks.sh
 ```
 
-Then open a new Claude Code session so its hooks are loaded.
+Keep the source checkout in place because the installed hooks execute its
+reviewable scripts. Private identity, state, lessons, memory, diary, and
+runtime data live only under `CLAUDE_BRAIN_DIR`. Then open a new Claude Code
+session so its hooks are loaded.
+
+To remove only Pawin Brain hook registrations without deleting user data:
+
+```bash
+CLAUDE_BRAIN_DIR="$HOME/.claude-brain" \
+  bash ~/.local/share/pawin-brain/install-hooks.sh --uninstall
+```
 
 ### ZCode
 
 ```bash
-git clone https://github.com/384961890-ui/Pawin-Brain.git ~/.claude-brain
-bash ~/.claude-brain/install-zcode-hooks.sh
+git clone https://github.com/384961890-ui/Pawin-Brain.git \
+  ~/.local/share/pawin-brain
+CLAUDE_BRAIN_DIR="$HOME/.claude-brain" \
+  bash ~/.local/share/pawin-brain/install-zcode-hooks.sh
 ```
+
+To remove only Pawin Brain's ZCode hook registrations, preserve unrelated
+ZCode settings, and restore the previous `hooks.enabled` value:
+
+```bash
+ZCODE_CONFIG_PATH="$HOME/.zcode/cli/config.json" \
+  bash ~/.local/share/pawin-brain/install-zcode-hooks.sh --uninstall
+```
+
+The historical clone-as-runtime layout (`git clone ... ~/.claude-brain`) still
+works and is protected by anchored runtime-data ignores, but source/data
+separation is the recommended layout.
 
 For every host, see `memory-spec/README.md` to bootstrap a structured memory
 tree and `qmd-engine/DEPLOY.md` to add local semantic retrieval. Neither
 requires the other — the spec works with grep alone.
 
-The Codex runtime bundle is generated only from an explicit public v8.3
+QMD's direct Python dependency versions are pinned in
+`qmd-engine/requirements.txt`. Model revisions, sizes, and SHA-256 digests are
+locked in `qmd-engine/models.lock.json`; run
+`python3 qmd-engine/verify_models.py` before building an index. The Python file
+is not a transitive, hash-locked environment lock; see `qmd-engine/DEPLOY.md`.
+
+## Data and network boundary
+
+- Core Claude Code, Codex, and ZCode hooks read and write only the configured
+  local Brain directory. They do not upload identity, memory, lessons, diary,
+  transcripts, or behavior state.
+- QMD listens on `127.0.0.1`; model weights are downloaded separately and are
+  not included in this repository.
+- Optional scripts under `v2/scripts/honest-loop/` are **not auto-enabled**.
+  When explicitly run with `DEEPSEEK_API_KEY`, they may send the supplied
+  query/draft to the documented DeepSeek endpoint; the ensemble helper may
+  also query DuckDuckGo. Review those scripts before opting in.
+- Installer smoke checks use generic text and dry-run mode. They do not consume
+  a stuck flag, update activity, activate lessons, or write session state.
+
+The Codex runtime bundle is generated only from an explicit public v8.3.1
 allowlist. `node scripts/build-codex-runtime.js` rebuilds it, and
 `node --test tests/codex/plugin.test.js` verifies byte-for-byte parity,
 hook coverage, safe first-run behavior, and de-identification.

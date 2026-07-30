@@ -48,11 +48,12 @@
 #    Xcode Command Line Tools：xcode-select --install；
 #    没装过的话编译要额外几分钟到十几分钟，属正常现象不是卡住）
 python3 -m venv .venv && source .venv/bin/activate
-pip install llama-cpp-python numpy
+python3 -m pip install -r requirements.txt
 
 # 2. 放模型（见 DEPLOY.md 第 2 节获取方式）
 mkdir -p ~/.qmd/models
-# 把 Qwen3-Embedding-4B-Q8_0.gguf 和 qwen3-reranker-0.6b-q8_0.gguf 放进去
+# 按 DEPLOY.md 的固定 revision 下载两个模型，然后校验
+python3 verify_models.py
 
 # 3. 配置待索引目录，并放至少一个示例文件进去——
 #    空目录直接 rebuild 没有内容可建索引，下一步会友好提示并退出
@@ -81,6 +82,9 @@ qmd-engine/
 ├── full_scan.py         # 扫描 + 分块 + 嵌入 + 原子写索引（含 rebuild/incremental）
 ├── qmd_daemon.py         # 常驻 HTTP daemon：/search /search_fast /health /reload /embed
 ├── health_check.py       # 三层召回健康自检（grep / embedding / reranker）
+├── requirements.txt      # 固定 Python 依赖版本
+├── models.lock.json      # 固定模型 revision / 文件大小 / SHA-256
+├── verify_models.py      # 模型完整性校验（只读）
 ├── nightly_run.sh        # 增量扫描定时任务入口
 ├── qmd_src/qmd/           # 检索引擎核心库：ingest.py（分块/文件清单）+ search_embed.py（向量检索/精排）
 ├── launchd/               # macOS 部署配置示例

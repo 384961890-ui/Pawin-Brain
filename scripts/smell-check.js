@@ -22,8 +22,12 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-// Brain home — override with env BRAIN_DIR if you keep config elsewhere.
-const BRAIN_DIR = process.env.BRAIN_DIR || path.join(os.homedir(), '.claude-brain');
+// Brain home — host adapters pass CLAUDE_BRAIN_DIR for custom data roots.
+const BRAIN_DIR = path.resolve(
+  process.env.CLAUDE_BRAIN_DIR ||
+  process.env.BRAIN_DIR ||
+  path.join(os.homedir(), '.claude-brain')
+);
 const CONFIG_PATH = path.join(BRAIN_DIR, 'config.json');
 const THROTTLE_PATH = path.join(BRAIN_DIR, 'state/throttle.json');
 
@@ -68,9 +72,17 @@ function loadConfig() {
 
 // Atomic write: temp file + rename, so concurrent sessions can't corrupt throttle.json
 function writeAtomic(p, content) {
-  const tmp = `${p}.tmp.${process.pid}`;
-  fs.writeFileSync(tmp, content);
-  fs.renameSync(tmp, p);
+  const directory = path.dirname(p);
+  const tmp = `${p}.tmp.${process.pid}.${Date.now()}`;
+  fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+  if (process.platform !== 'win32') fs.chmodSync(directory, 0o700);
+  try {
+    fs.writeFileSync(tmp, content, { mode: 0o600, flag: 'wx' });
+    fs.renameSync(tmp, p);
+    if (process.platform !== 'win32') fs.chmodSync(p, 0o600);
+  } finally {
+    try { fs.unlinkSync(tmp); } catch {}
+  }
 }
 
 // Gate: only inspect source files; skip docs/config/data/deps/private paths

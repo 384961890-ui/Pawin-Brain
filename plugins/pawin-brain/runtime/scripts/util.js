@@ -45,9 +45,17 @@ function readFileSafe(p, fallback = '') {
 }
 
 function writeFileAtomic(p, content) {
-  const tmp = `${p}.tmp.${process.pid}`;
-  fs.writeFileSync(tmp, content);
-  fs.renameSync(tmp, p);
+  const directory = path.dirname(p);
+  const tmp = `${p}.tmp.${process.pid}.${Date.now()}`;
+  fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+  if (process.platform !== 'win32') fs.chmodSync(directory, 0o700);
+  try {
+    fs.writeFileSync(tmp, content, { mode: 0o600, flag: 'wx' });
+    fs.renameSync(tmp, p);
+    if (process.platform !== 'win32') fs.chmodSync(p, 0o600);
+  } finally {
+    try { fs.unlinkSync(tmp); } catch {}
+  }
 }
 
 function loadLessons(indexPath) {
@@ -248,7 +256,8 @@ function nowReadable(date = new Date()) {
 function debugLog(config, ...args) {
   if (config && config.debug) {
     const logPath = path.join(BRAIN_DIR, 'debug.log');
-    fs.appendFileSync(logPath, `[${nowISO()}] ${args.join(' ')}\n`);
+    fs.appendFileSync(logPath, `[${nowISO()}] ${args.join(' ')}\n`, { mode: 0o600 });
+    if (process.platform !== 'win32') fs.chmodSync(logPath, 0o600);
   }
 }
 

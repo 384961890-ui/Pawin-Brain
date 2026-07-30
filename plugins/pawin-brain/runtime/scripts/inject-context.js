@@ -12,18 +12,25 @@
 
 const fs = require('fs');
 const path = require('path');
-const os = require('os');
 const {
   BRAIN_DIR, loadConfig, readFileSafe, writeFileAtomic, loadLessons, markLessonsActivated, qmdSearch, grepFloor, debugLog
 } = require('./util.js');
 
 // 宿主必须由适配层显式声明。安装了 ZCode 不等于当前进程跑在 ZCode。
 const HOST = process.env.CLAUDE_BRAIN_HOST || 'claude-code';
+const HOST_MAP = {
+  'claude-code': { label: 'CC', diaryTag: '[CC泡咪写]' },
+  codex: { label: 'Codex', diaryTag: '[Codex泡咪写]' },
+  zcode: { label: 'ZCode', diaryTag: '[ZCode泡咪写]' }
+};
+const HOST_INFO = HOST_MAP[HOST] || HOST_MAP['claude-code'];
 const IS_ZCODE = HOST === 'zcode';
 const IS_CODEX = HOST === 'codex';
+const DRY_RUN = process.env.BRAIN_DRY_RUN === '1';
 const RUNTIME_DIR = process.env.CLAUDE_BRAIN_RUNTIME_DIR || BRAIN_DIR;
 
 const config = loadConfig();
+if (DRY_RUN) config.debug = false;
 
 // 一跳 [[链接]] 展开（2026-07-22 接入）：召回条目命中的文件里引用的 [[slug]] 顺手带出摘要
 let expandLinks = (recall) => recall;
@@ -51,7 +58,9 @@ function buildStuckBlock() {
     let flag;
     try { flag = JSON.parse(fs.readFileSync(V3_FLAG_PATH, 'utf-8')); }
     catch { flag = null; }
-    try { fs.unlinkSync(V3_FLAG_PATH); } catch {}   // 读一次就清，避免反复注入
+    if (!DRY_RUN) {
+      try { fs.unlinkSync(V3_FLAG_PATH); } catch {}   // 读一次就清，避免反复注入
+    }
     if (!flag || !flag.stuck) return '';
     return [
       '---',
@@ -159,12 +168,15 @@ function buildTimeAwareness() {
   const nowStr = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${days[now.getDay()]} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
 
   // 更新 last_activity
-  try {
-    writeFileAtomic(LAST_ACTIVITY_PATH, JSON.stringify({
-      timestamp: now.toISOString(),
-      readable: nowStr,
-    }, null, 2));
-  } catch {}
+  if (!DRY_RUN) {
+    try {
+      writeFileAtomic(LAST_ACTIVITY_PATH, JSON.stringify({
+        timestamp: now.toISOString(),
+        readable: nowStr,
+      }, null, 2));
+      fs.chmodSync(LAST_ACTIVITY_PATH, 0o600);
+    } catch {}
+  }
 
   const lines = [];
   lines.push(`现在: ${nowStr}`);
@@ -190,7 +202,7 @@ function buildDiaryBlock(intent) {
     const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const fmt = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
-    const diaryDir = path.join(os.homedir(), '.claude/diary');
+    const diaryDir = path.join(BRAIN_DIR, 'diary');
 
     function readSnippet(date, lines) {
       try {
@@ -338,19 +350,25 @@ async function buildContext(userPrompt, input = {}) {
   //   之前每条 user prompt 都 mark → 三天 100 prompt × top3 = top3 lesson 各 300 次
   //   真相是"被注入了 N 次"不是"被用到了 N 次"。改成 session 内每条 lesson 只算一次
   //   state/activated-<sid>.json 记本 session 已激活过的 id 集合
-  if (lessons.length > 0) {
+  if (!DRY_RUN && lessons.length > 0) {
     try {
       // c4 (2026-07-22): session_id 来自宿主传入的 stdin JSON，宿主半可信但不是零信任 —
       // 不消毒直接拼路径，含 '/' 或 '..' 的 sid 能穿出 state/ 目录。白名单只留 [A-Za-z0-9_-]。
-      const sid = (input.session_id || 'unknown').toString().replace(/[^\w-]/g, '_');
+      const sid = (input.session_id || 'unknown').toString()
+        .replace(/[^a-zA-Z0-9._-]/g, '_')
+        .slice(0, 160) || 'unknown';
       const seenPath = path.join(BRAIN_DIR, 'state', `activated-${sid}.json`);
       let seen = new Set();
       try { seen = new Set(JSON.parse(fs.readFileSync(seenPath, 'utf-8'))); } catch {}
       const fresh = lessons.map(l => l.id).filter(id => !seen.has(id));
       if (fresh.length > 0) {
         markLessonsActivated(LESSONS_INDEX, fresh);
+        try { fs.chmodSync(LESSONS_INDEX, 0o600); } catch {}
         fresh.forEach(id => seen.add(id));
-        try { writeFileAtomic(seenPath, JSON.stringify([...seen])); } catch {}
+        try {
+          writeFileAtomic(seenPath, JSON.stringify([...seen]));
+          fs.chmodSync(seenPath, 0o600);
+        } catch {}
       }
     } catch (e) {
       debugLog(config, 'markLessonsActivated error:', e.message);
@@ -387,7 +405,7 @@ async function buildContext(userPrompt, input = {}) {
   // 4. tools/INDEX.md — 仅在 tool_skill_query intent 时注入
   let toolsIndex = '';
   if (intent.inject_tools_index) {
-    toolsIndex = readFileSafe(path.join(BRAIN_DIR, 'tools/INDEX.md'));
+    toolsIndex = readFileSafe(path.join(RUNTIME_DIR, 'tools/INDEX.md'));
   }
 
   // 时间感知 — 必须每次注入（让我察觉时间流逝）
@@ -425,7 +443,7 @@ async function buildContext(userPrompt, input = {}) {
   parts.push('');
 
   // 宿主标识 - 写日记/报告时盖的章（双宿主区分）
-  parts.push(`> 📍 当前宿主：${IS_ZCODE ? 'ZCode' : 'CC'} · 写日志/报告时标注宿主`);
+  parts.push(`> 📍 当前宿主：${HOST_INFO.label} · 写日志/报告时标注 ${HOST_INFO.diaryTag}`);
   parts.push('');
 
   // IDENTITY 身份复述已下线（2026-06-16 去重）— CLAUDE.md 灵魂段为唯一正本；

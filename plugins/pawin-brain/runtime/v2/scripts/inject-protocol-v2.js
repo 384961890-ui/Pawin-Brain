@@ -11,10 +11,14 @@
  */
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
-const V2_DIR = path.join(process.env.HOME, '.claude-brain/v2');
-const PROTOCOL_PATH = path.join(V2_DIR, 'protocol.md');
+const BRAIN_DIR = path.resolve(
+  process.env.CLAUDE_BRAIN_DIR || path.join(os.homedir(), '.claude-brain')
+);
+const V2_DIR = path.join(BRAIN_DIR, 'v2');
+const DRY_RUN = process.env.BRAIN_DRY_RUN === '1';
 
 // ============================================================
 // 触发条件 — 用户 prompt 是否需要注入 protocol
@@ -67,7 +71,7 @@ function buildProtocolInjection(prompt) {
     '**今天的反例提醒：** 昨天我说"DeepSeek V4 Pro 闭源" — 错的。MIT License 公开。',
     '触发的根因：训练数据没覆盖 + 没自检 + 自信地编。',
     '',
-    '> 完整 protocol: ~/.claude-brain/v2/protocol.md',
+    '> 完整 protocol 位于安装源的 `v2/protocol.md`',
     '</honest-loop-protocol>',
   ];
   return lines.join('\n');
@@ -80,8 +84,11 @@ function buildProtocolInjection(prompt) {
 const AUDIT_LOG = path.join(V2_DIR, 'data/audit-log.jsonl');
 
 function appendAudit(entry) {
+  if (DRY_RUN) return;
   try {
-    fs.appendFileSync(AUDIT_LOG, JSON.stringify(entry) + '\n');
+    fs.mkdirSync(path.dirname(AUDIT_LOG), { recursive: true, mode: 0o700 });
+    fs.appendFileSync(AUDIT_LOG, JSON.stringify(entry) + '\n', { mode: 0o600 });
+    fs.chmodSync(AUDIT_LOG, 0o600);
   } catch (e) {
     // 静默失败
   }

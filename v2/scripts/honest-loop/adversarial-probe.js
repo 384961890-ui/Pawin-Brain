@@ -41,11 +41,15 @@
 
 const https = require('https');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const DEEPSEEK_API_KEY = process.env.DEEPSEEK_API_KEY;
 if (!DEEPSEEK_API_KEY) throw new Error("DEEPSEEK_API_KEY env var not set");
-const V2_DIR = path.join(process.env.HOME, '.claude-brain/v2');
+const BRAIN_DIR = path.resolve(
+  process.env.CLAUDE_BRAIN_DIR || path.join(os.homedir(), '.claude-brain')
+);
+const V2_DIR = path.join(BRAIN_DIR, 'v2');
 const AUDIT_LOG = path.join(V2_DIR, 'data/audit-log.jsonl');
 
 // ============================================================

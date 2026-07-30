@@ -38,7 +38,10 @@ const { z } = smartRequire('zod');
 const fs = require('fs');
 const { spawnSync } = require('child_process');
 
-const V2_DIR = path.join(os.homedir(), '.claude-brain/v2');
+const BRAIN_DIR = path.resolve(
+  process.env.CLAUDE_BRAIN_DIR || path.join(os.homedir(), '.claude-brain')
+);
+const V2_DIR = path.join(BRAIN_DIR, 'v2');
 const FUSE_JS = path.join(V2_DIR, 'scripts/honest-loop/fuse.js');
 const ADV_JS = path.join(V2_DIR, 'scripts/honest-loop/adversarial-probe.js');
 const AUDIT_LOG = path.join(V2_DIR, 'data/audit-log.jsonl');

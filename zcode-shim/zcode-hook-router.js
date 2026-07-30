@@ -16,8 +16,11 @@ const os = require('os');
 const path = require('path');
 const { spawnSync } = require('child_process');
 
-const BRAIN_DIR = process.env.CLAUDE_BRAIN_DIR || path.resolve(__dirname, '..');
-const SESSIONS_DIR = path.join(BRAIN_DIR, 'zcode-shim', 'sessions');
+const BRAIN_DIR = path.resolve(
+  process.env.CLAUDE_BRAIN_DIR || path.resolve(__dirname, '..')
+);
+const ZCODE_DIR = path.join(BRAIN_DIR, 'zcode-shim');
+const SESSIONS_DIR = path.join(ZCODE_DIR, 'sessions');
 const MODE = process.argv[2] || '';
 
 const SCRIPTS = {
@@ -29,20 +32,61 @@ const SCRIPTS = {
   captureLesson: path.join(BRAIN_DIR, 'scripts', 'capture-lesson.js'),
   updateState: path.join(BRAIN_DIR, 'scripts', 'update-state.js'),
 };
-
-let input = '';
-process.stdin.setEncoding('utf8');
-process.stdin.on('data', chunk => (input += chunk));
-process.stdin.on('end', () => {
-  try {
-    if (MODE === 'inject-context') return routeInjectContext(input);
-    if (MODE === 'post-tool-use') return routeToolEvent(input, false);
-    if (MODE === 'post-tool-use-failure') return routeToolEvent(input, true);
-    if (MODE === 'stop') return routeStop(input);
-  } catch {}
-  process.exit(0);
+const STOP_TIMEOUTS = Object.freeze({
+  stopAudit: 5000,
+  finishWork: 5000,
+  thinkDetect: 5000,
+  captureLesson: 9000,
+  updateState: 4000,
 });
-process.stdin.on('error', () => process.exit(0));
+const STOP_BUDGET_MS = 38000;
+
+function safeSessionId(value) {
+  const sanitized = String(value == null ? '' : value)
+    .replace(/[^A-Za-z0-9._-]/g, '_')
+    .slice(0, 160);
+  return sanitized || 'unknown';
+}
+
+function safeSessionsDir() {
+  for (const directory of [BRAIN_DIR, ZCODE_DIR, SESSIONS_DIR]) {
+    const stat = fs.lstatSync(directory);
+    if (!stat.isDirectory() || stat.isSymbolicLink()) {
+      throw new Error('unsafe ZCode sessions path');
+    }
+  }
+  return path.resolve(SESSIONS_DIR);
+}
+
+function sessionFile(value) {
+  const root = safeSessionsDir();
+  const file = path.resolve(root, `${safeSessionId(value)}.jsonl`);
+  if (!file.startsWith(`${root}${path.sep}`)) {
+    throw new Error('session path escaped sessions directory');
+  }
+  return file;
+}
+
+function normalizeSession(payload) {
+  const normalized = safeSessionId(payload.session_id ?? payload.sessionId);
+  return { ...payload, session_id: normalized, sessionId: normalized };
+}
+
+function readOnce() {
+  let input = '';
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('data', chunk => (input += chunk));
+  process.stdin.on('end', () => {
+    try {
+      if (MODE === 'inject-context') return routeInjectContext(input);
+      if (MODE === 'post-tool-use') return routeToolEvent(input, false);
+      if (MODE === 'post-tool-use-failure') return routeToolEvent(input, true);
+      if (MODE === 'stop') return routeStop(input);
+    } catch {}
+    process.exit(0);
+  });
+  process.stdin.on('error', () => process.exit(0));
+}
 
 function runScript(script, stdin, options = {}) {
   try {
@@ -50,12 +94,29 @@ function runScript(script, stdin, options = {}) {
       input: stdin,
       encoding: 'utf8',
       timeout: options.timeout || 10000,
-      env: options.env || process.env,
+      env: {
+        ...process.env,
+        CLAUDE_BRAIN_DIR: BRAIN_DIR,
+        CLAUDE_BRAIN_HOST: 'zcode',
+        ...(options.env || {}),
+      },
       maxBuffer: 1024 * 1024,
     });
   } catch {
     return null;
   }
+}
+
+function deadlineBudget(totalMs) {
+  const deadline = Date.now() + totalMs;
+  return (capMs, reserveMs = 0) => Math.max(
+    0,
+    Math.min(capMs, deadline - Date.now() - reserveMs)
+  );
+}
+
+function runBudgeted(script, stdin, timeout) {
+  return timeout > 0 ? runScript(script, stdin, { timeout }) : null;
 }
 
 function relayValidJson(stdout) {
@@ -68,9 +129,14 @@ function relayValidJson(stdout) {
 }
 
 function routeInjectContext(stdin) {
-  const result = runScript(SCRIPTS.injectContext, stdin, {
-    env: { ...process.env, CLAUDE_BRAIN_HOST: 'zcode' },
-  });
+  let payload;
+  try { payload = JSON.parse(stdin || '{}'); } catch { payload = {}; }
+  const remaining = deadlineBudget(8000);
+  const result = runBudgeted(
+    SCRIPTS.injectContext,
+    JSON.stringify(normalizeSession(payload)),
+    remaining(7500)
+  );
   if (result) relayValidJson(result.stdout);
   process.exit(0);
 }
@@ -78,19 +144,64 @@ function routeInjectContext(stdin) {
 function routeToolEvent(stdin, isFailure) {
   let payload;
   try { payload = JSON.parse(stdin || '{}'); } catch { payload = {}; }
+  payload = normalizeSession(payload);
   payload.hook_event_name = isFailure ? 'PostToolUseFailure' : 'PostToolUse';
   payload.hookEventName = payload.hook_event_name;
-  runScript(SCRIPTS.trackBehavior, JSON.stringify(payload));
+  const remaining = deadlineBudget(8000);
+  runBudgeted(SCRIPTS.trackBehavior, JSON.stringify(payload), remaining(7500));
   process.exit(0);
 }
 
-function buildTranscript(payload) {
-  const sessionId = payload.session_id || payload.sessionId;
-  const sessionFile = sessionId && path.join(SESSIONS_DIR, `${sessionId}.jsonl`);
+function readPrivateFile(file, maxBytes = 256 * 1024) {
+  if (!file) return '';
+  let descriptor;
+  try {
+    const flags = fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0);
+    descriptor = fs.openSync(file, flags);
+    const stat = fs.fstatSync(descriptor);
+    if (!stat.isFile()) return '';
+    const length = Math.min(stat.size, maxBytes);
+    const offset = Math.max(0, stat.size - length);
+    const buffer = Buffer.alloc(length);
+    const bytesRead = fs.readSync(descriptor, buffer, 0, length, offset);
+    let text = buffer.subarray(0, bytesRead).toString('utf8');
+    if (offset > 0) {
+      const firstLineEnd = text.indexOf('\n');
+      text = firstLineEnd >= 0 ? text.slice(firstLineEnd + 1) : '';
+    }
+    return text;
+  } catch {
+    return '';
+  } finally {
+    if (descriptor !== undefined) {
+      try { fs.closeSync(descriptor); } catch {}
+    }
+  }
+}
+
+function createPrivateTranscript(lines) {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'pawin-zcode-stop-'));
+  try {
+    fs.chmodSync(directory, 0o700);
+    const file = path.join(directory, 'transcript.jsonl');
+    fs.writeFileSync(file, `${lines.join('\n')}\n`, {
+      mode: 0o600,
+      flag: 'wx',
+    });
+    fs.chmodSync(file, 0o600);
+    return { directory, file };
+  } catch (error) {
+    try { fs.rmSync(directory, { recursive: true, force: true }); } catch {}
+    throw error;
+  }
+}
+
+function buildTranscript(payload, promptFile) {
   const lines = [];
 
-  if (sessionFile && fs.existsSync(sessionFile)) {
-    const userLines = fs.readFileSync(sessionFile, 'utf8')
+  const promptText = readPrivateFile(promptFile);
+  if (promptText) {
+    const userLines = promptText
       .split('\n')
       .filter(line => line.trim())
       .slice(-100);
@@ -122,38 +233,80 @@ function buildTranscript(payload) {
   }
 
   if (lines.length === 0) return null;
-  const file = path.join(os.tmpdir(), `zcode-brain-${process.pid}-${Date.now()}.jsonl`);
-  fs.writeFileSync(file, `${lines.join('\n')}\n`);
-  return file;
+  return createPrivateTranscript(lines);
 }
 
 function routeStop(stdin) {
   let payload;
   try { payload = JSON.parse(stdin || '{}'); } catch { payload = {}; }
+  payload = normalizeSession(payload);
 
-  let transcriptPath = null;
+  let temporary = null;
+  let promptFile = null;
+  try { promptFile = sessionFile(payload.session_id); } catch {}
   let finishOutput = '';
+  const remaining = deadlineBudget(STOP_BUDGET_MS);
   try {
-    transcriptPath = buildTranscript(payload);
+    temporary = buildTranscript(payload, promptFile);
+    const transcriptPath = temporary && temporary.file;
     const adapted = transcriptPath
       ? { ...payload, transcript_path: transcriptPath, transcriptPath }
       : payload;
     const adaptedInput = JSON.stringify(adapted);
 
-    if (transcriptPath) {
-      runScript(SCRIPTS.stopAudit, adaptedInput);
-      const finish = runScript(SCRIPTS.finishWork, adaptedInput);
+    if (temporary) {
+      runBudgeted(
+        SCRIPTS.stopAudit,
+        adaptedInput,
+        remaining(STOP_TIMEOUTS.stopAudit, STOP_TIMEOUTS.updateState + 1000)
+      );
+      const finish = runBudgeted(
+        SCRIPTS.finishWork,
+        adaptedInput,
+        remaining(STOP_TIMEOUTS.finishWork, STOP_TIMEOUTS.updateState + 1000)
+      );
       if (finish) finishOutput = finish.stdout || '';
-      runScript(SCRIPTS.thinkDetect, adaptedInput);
-      runScript(SCRIPTS.captureLesson, adaptedInput, { timeout: 12000 });
+      runBudgeted(
+        SCRIPTS.thinkDetect,
+        adaptedInput,
+        remaining(STOP_TIMEOUTS.thinkDetect, STOP_TIMEOUTS.updateState + 1000)
+      );
+      runBudgeted(
+        SCRIPTS.captureLesson,
+        adaptedInput,
+        remaining(STOP_TIMEOUTS.captureLesson, STOP_TIMEOUTS.updateState + 1000)
+      );
     }
   } catch {} finally {
-    runScript(SCRIPTS.updateState, JSON.stringify(payload));
-    if (transcriptPath) {
-      try { fs.unlinkSync(transcriptPath); } catch {}
+    runBudgeted(
+      SCRIPTS.updateState,
+      JSON.stringify(payload),
+      remaining(STOP_TIMEOUTS.updateState)
+    );
+    if (temporary) {
+      try { fs.rmSync(temporary.directory, { recursive: true, force: true }); } catch {}
+    }
+    if (promptFile) {
+      try {
+        safeSessionsDir();
+        fs.unlinkSync(promptFile);
+      } catch {}
     }
   }
 
   relayValidJson(finishOutput);
   process.exit(0);
 }
+
+if (require.main === module) readOnce();
+
+module.exports = {
+  STOP_BUDGET_MS,
+  STOP_TIMEOUTS,
+  buildTranscript,
+  deadlineBudget,
+  readPrivateFile,
+  safeSessionId,
+  safeSessionsDir,
+  sessionFile,
+};

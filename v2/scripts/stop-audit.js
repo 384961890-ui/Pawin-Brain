@@ -16,11 +16,16 @@
  */
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
-const V2_DIR = path.join(process.env.HOME, '.claude-brain/v2');
+const BRAIN_DIR = path.resolve(
+  process.env.CLAUDE_BRAIN_DIR || path.join(os.homedir(), '.claude-brain')
+);
+const V2_DIR = path.join(BRAIN_DIR, 'v2');
 const PENDING_REVIEW = path.join(V2_DIR, 'data/pending-review.json');
 const AUDIT_LOG = path.join(V2_DIR, 'data/audit-log.jsonl');
+const DRY_RUN = process.env.BRAIN_DRY_RUN === '1';
 
 // 复用 fuse 里的 PATTERN_RULES — 这里精简
 const PATTERN_RULES = {
@@ -75,12 +80,18 @@ function loadPendingReview() {
 }
 
 function savePendingReview(data) {
-  fs.writeFileSync(PENDING_REVIEW, JSON.stringify(data, null, 2));
+  if (DRY_RUN) return;
+  fs.mkdirSync(path.dirname(PENDING_REVIEW), { recursive: true, mode: 0o700 });
+  fs.writeFileSync(PENDING_REVIEW, JSON.stringify(data, null, 2), { mode: 0o600 });
+  fs.chmodSync(PENDING_REVIEW, 0o600);
 }
 
 function appendAudit(entry) {
+  if (DRY_RUN) return;
   try {
-    fs.appendFileSync(AUDIT_LOG, JSON.stringify(entry) + '\n');
+    fs.mkdirSync(path.dirname(AUDIT_LOG), { recursive: true, mode: 0o700 });
+    fs.appendFileSync(AUDIT_LOG, JSON.stringify(entry) + '\n', { mode: 0o600 });
+    fs.chmodSync(AUDIT_LOG, 0o600);
   } catch (e) {
     // 静默
   }

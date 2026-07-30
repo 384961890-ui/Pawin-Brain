@@ -14,8 +14,13 @@ qmd-engine 是本地语义记忆检索：embedding 召回 + reranker 精排两�
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install llama-cpp-python numpy
+python3 -m pip install -r requirements.txt
 ```
+
+`requirements.txt` 固定的是本项目直接依赖版本，避免 Python API 漂移；它不是
+跨平台完整的传递依赖哈希锁。`llama-cpp-python` 在不同系统上还会走不同编译
+工具链。高安全环境应在目标平台生成并审查自己的 `--require-hashes` 锁文件。
+模型文件不走这个边界，下面的 `models.lock.json` 会做独立 SHA-256 校验。
 
 `llama-cpp-python` 需要能跑 GGUF 模型；如果要用 GPU 加速（macOS Metal /
 CUDA），装对应编译选项的版本，参考 llama-cpp-python 官方文档。
@@ -50,10 +55,22 @@ qmd-engine 需要两个 GGUF 量化模型，放进 `$QMD_MODELS_DIR`（默认
 | Qwen3-Embedding-4B-Q8_0 | 召回（embedding） | `Qwen3-Embedding-4B-Q8_0.gguf` |
 | Qwen3-Reranker-0.6B-Q8_0 | 精排（reranker） | `qwen3-reranker-0.6b-q8_0.gguf` |
 
-从 Hugging Face 上对应的 GGUF 仓库下载（搜 "Qwen3-Embedding-4B-GGUF" /
-"Qwen3-Reranker-0.6B-GGUF"，选 Q8_0 量化版本）。两个都是现成开源模型，
-下载后直接放进 `$QMD_MODELS_DIR` 即可，代码里不需要改任何路径——
-`qmd_config.py` 会自动从这个目录按上表文件名拼路径。
+不要凭搜索结果随便挑同名文件。`models.lock.json` 固定了仓库 revision、
+文件大小与 SHA-256；以下命令下载锁定版本：
+
+```bash
+mkdir -p "${QMD_MODELS_DIR:-$HOME/.qmd/models}"
+curl -fL \
+  'https://huggingface.co/Qwen/Qwen3-Embedding-4B-GGUF/resolve/f4602530db1d980e16da9d7d3a70294cf5c190be/Qwen3-Embedding-4B-Q8_0.gguf?download=true' \
+  -o "${QMD_MODELS_DIR:-$HOME/.qmd/models}/Qwen3-Embedding-4B-Q8_0.gguf"
+curl -fL \
+  'https://huggingface.co/ggml-org/Qwen3-Reranker-0.6B-Q8_0-GGUF/resolve/a02f48bb4f057028298c21fa033da2b30d7742d5/qwen3-reranker-0.6b-q8_0.gguf?download=true' \
+  -o "${QMD_MODELS_DIR:-$HOME/.qmd/models}/qwen3-reranker-0.6b-q8_0.gguf"
+python3 verify_models.py
+```
+
+只有 `verify_models.py` 返回 `ok: true` 才继续建索引。校验器只读模型，
+不会下载、删除或改写文件。
 
 换成别的量化档位（如 Q4）或别的 embedding 模型会改变输出维度，
 必须同步改 `qmd_config.py` 的 `EXPECTED_EMBED_DIM` 并全量重建索引，

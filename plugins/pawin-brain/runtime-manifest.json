@@ -1,16 +1,20 @@
 {
   "schema": 1,
-  "baseline": "Brain v8.3 public final",
-  "baselineSourceCommit": "4ba244f27482025cf677d513e244df44db3ab563",
-  "adapter": "Codex host compatibility changes only",
+  "baseline": "Brain v8.3.1 public hardening",
+  "baselineSourceCommit": "same commit as this generated manifest",
+  "adapter": "Codex host adapter over an exact public source allowlist",
   "files": [
+    {
+      "path": "CHANGELOG-v8.3.1.md",
+      "sha256": "dbd7ec8a0541d50316a39d57998aa514ae51f7cb3ea65325efe1fbedad63ddf4"
+    },
     {
       "path": "CHANGELOG-v8.3.md",
       "sha256": "11ec06cc241d2327eaebdb3e57c5895b83c860fe9954f0b6c53a0694c1da37d4"
     },
     {
       "path": "CHANGELOG.md",
-      "sha256": "17f6cb5d368a8a7db2eb74a77bad6f4bb8139ad5ed2bc2da2547cb9bb3632e68"
+      "sha256": "3771daf94108bd245f492c0026cba36d426305196774a49ec568712c15a37536"
     },
     {
       "path": "INDEX.md",
@@ -22,7 +26,7 @@
     },
     {
       "path": "README.md",
-      "sha256": "ecafe6ad3b0a6a01e54deed18e6747898c5fe3334699720c20dbf1aa4d2818d8"
+      "sha256": "8749ca6abcf9899ad57b5e2b129f31b0af668db55918194eb7044b6ec8932fc4"
     },
     {
       "path": "brain-readme.md",
@@ -106,7 +110,7 @@
     },
     {
       "path": "qmd-engine/DEPLOY.md",
-      "sha256": "10a128c49f78810e0ff79a8ccac11942899695716a0ddde8c75da32739bb9814"
+      "sha256": "d5d9564c7495134dd3ce06eee4acc396106452558f2859c0991be11f3cb75b2b"
     },
     {
       "path": "qmd-engine/PITFALLS.md",
@@ -114,7 +118,7 @@
     },
     {
       "path": "qmd-engine/README.md",
-      "sha256": "04f8c17bcd64fe1f9241d1e6784c1faad7ed217403a82f3d4eac0d14b965af98"
+      "sha256": "07f8957dbb9cb08a51551fb8dbaeb6fb47fda119a054ea86004b09c5c7ab8e87"
     },
     {
       "path": "qmd-engine/full_scan.py",
@@ -131,6 +135,10 @@
     {
       "path": "qmd-engine/launchd/com.example.qmd-nightly.plist",
       "sha256": "aac904ed4b682531226538aa0c2525604638d95612cf0d946e6738c6c982804f"
+    },
+    {
+      "path": "qmd-engine/models.lock.json",
+      "sha256": "58d3f10a272e688caf8c106fa76eff36369a99ff8a4882fe508c7c79d4bffd3c"
     },
     {
       "path": "qmd-engine/nightly_run.sh",
@@ -161,6 +169,10 @@
       "sha256": "f541378c6e7625e125b78cd44ef39a415af12cd24aed03e82a65a3d10be39e85"
     },
     {
+      "path": "qmd-engine/requirements.txt",
+      "sha256": "20615e867ee9f741b6ff35eccb80117e10ed39f778fe99f9f95ff7c999627647"
+    },
+    {
       "path": "qmd-engine/systemd/qmd-daemon.service",
       "sha256": "ee9b463655505ee42d6f915dbbb4b341c84e3aa8dd7665223fe43c50e8563ce8"
     },
@@ -173,6 +185,10 @@
       "sha256": "b9359af904f137ebee4e79e5ddd8e14c53458d1d9b8cbbe88f71ca14a78ef936"
     },
     {
+      "path": "qmd-engine/verify_models.py",
+      "sha256": "f4738e760d4e9f0107e59464acb2871db38f47583902eaf52fdd8a3841fa3e64"
+    },
+    {
       "path": "scripts/analyze-behavior.js",
       "sha256": "ac4ddf8bbf6acff66b8004035003a6fa33616ca2dd22f10624522d215b9075cc"
     },
@@ -182,7 +198,7 @@
     },
     {
       "path": "scripts/capture-lesson.js",
-      "sha256": "85902cde646e9d225a717871dcf632c4740d48b54a7a1a7e83f5ff833e78d11f"
+      "sha256": "1a8f096403763566b3142bb8b8071d6a1bfea1aba37439b48787ec9a2a4e4262"
     },
     {
       "path": "scripts/cleanup-noise-lessons.js",
@@ -210,7 +226,7 @@
     },
     {
       "path": "scripts/inject-context.js",
-      "sha256": "054f38997e131483b0a4db54c49b853986c50cb9334c0db4d67ef86ac566dbf8"
+      "sha256": "61b80ce1d6e4ac45a34dd94951c10800a2ddb11a725754e63c53e36d7fbbc993"
     },
     {
       "path": "scripts/link-expand.js",
@@ -222,11 +238,11 @@
     },
     {
       "path": "scripts/selftest.js",
-      "sha256": "853d4654e02254f15d33d15a5c3b71abfd723c636eeaf10904c7fc39ed4c3d5c"
+      "sha256": "ae82a629531baad2c729b567437bfb5a585c1f152470a2865b01fb49482827ed"
     },
     {
       "path": "scripts/smell-check.js",
-      "sha256": "90769ae36adb18238629515f0e4a1d86433fc8db669faa8e9d0e932ba63119ea"
+      "sha256": "00102bc8f03c06d2b468cbc816fff705038f1a4ebbc3afd85eea808613cf31fd"
     },
     {
       "path": "scripts/track-behavior.js",
@@ -238,7 +254,7 @@
     },
     {
       "path": "scripts/util.js",
-      "sha256": "eb8098efe44f0eeb825225b31524a995f5cde04ac30e5cdf33039a2893dfe668"
+      "sha256": "1457a506c2c209eefaf7f8484f149fa34c5c71d955b2a4004b9da282be6076bb"
     },
     {
       "path": "tools/INDEX.md",
@@ -262,15 +278,15 @@
     },
     {
       "path": "v2/scripts/honest-loop-mcp.js",
-      "sha256": "073ea5d5946de86582196fde7ceed7a0eab2798e9eb20c0e8707a82f879a82d8"
+      "sha256": "337b4ebb8407540c51266cf5f9fb1f69990c1f45b99ec96c92cacd225692d0cd"
     },
     {
       "path": "v2/scripts/honest-loop/adversarial-probe.js",
-      "sha256": "320ae3bdc4338ffc0b4b99feaede7b3eba6b4d885d321d55511a62ec2fa030c7"
+      "sha256": "b97f02153ea278e9c3ca1a8b4aec9048f48cce4ef06fadea6f09b33db93c4474"
     },
     {
       "path": "v2/scripts/honest-loop/fuse.js",
-      "sha256": "802e5ec64dbac6740ac5a00260c6becf33e3d0e457ff4e49b3ec7fa7f7fb3932"
+      "sha256": "5b810e00c93d9045da6f3b176f2f2ea16e4fe1a4029b9758586508d81b72cbec"
     },
     {
       "path": "v2/scripts/honest-loop/signal-2-consistency.py",
@@ -282,27 +298,23 @@
     },
     {
       "path": "v2/scripts/inject-protocol-v2.js",
-      "sha256": "d4d1bc517add027c8b778b524a04bbeba515c8b77ade50c12f75cb58e4d961ff"
+      "sha256": "1529ce77079ef3f1922bdd8cde9c07902184392e020d28e59a1464e9931b223f"
     },
     {
       "path": "v2/scripts/sleep-loop/calibration-update.py",
-      "sha256": "a5d8deedb0b2a0c3071622ccc1a71d22797767b00bcfd310c89d43796a7bc58f"
+      "sha256": "9ce1c73566be231f655ae3ee100f71762d327eaee4ac03f852d5eb23e8d19015"
     },
     {
       "path": "v2/scripts/sleep-loop/nightly-consolidate.py",
-      "sha256": "ce2c330cbc76f4063f01e2a9b843806ae93962e302c72d34c0bf69e73e0ead20"
+      "sha256": "505c79e7c73c85c6594e6d1952e96f444c27c7b2ff31d74871b641514a57b478"
     },
     {
       "path": "v2/scripts/stop-audit.js",
-      "sha256": "3b6face6f52c26095913f24d051b8fff5da37018ede1e9e2ff29ff8632aa45d6"
+      "sha256": "b816e25da9afbf80a91b4059d6a1601e06d52a33f2b5d16dfa0a4582ad6fa89c"
     },
     {
       "path": "v3/DESIGN.md",
       "sha256": "75628adfc4b7d4de2411c731e0130bda1512249459764d9e759b25f057aadfe1"
-    },
-    {
-      "path": "v3/install-think-loop.sh",
-      "sha256": "402cab31955f0b4a40242bbffbe9264e2f9f0211c616d53cb9fb60c5d2acf9c2"
     },
     {
       "path": "v3/scripts/think-detect.js",
@@ -318,7 +330,7 @@
     },
     {
       "path": "v4/scripts/idea-loop-trigger.js",
-      "sha256": "44d5a11cc79928ec6b004601bee38c4480cdc61386ae999273ea033d94b44075"
+      "sha256": "64f7e133c72a2a04245aaf36f5809e85ae721579cd78ac1285c58397052aa7bb"
     },
     {
       "path": "v5/DESIGN.md",
@@ -326,7 +338,7 @@
     },
     {
       "path": "v5/scripts/ingest.js",
-      "sha256": "c3d459e6ad1d9ec99a2e93eb53c67851ade8fd02b349ef100a3c85063bd0dc35"
+      "sha256": "4feef2391d09f67e08da770ed4b6b4eaccb934041f2dd0d831aeb08fec90acb1"
     },
     {
       "path": "v5/scripts/jxa/ocr-image.js",
@@ -346,7 +358,7 @@
     },
     {
       "path": "v6/PROMPT-TEST.md",
-      "sha256": "f6ce0a346315a846d42ef7502bd861813f3ab1d20fef6e2fac3fca6d6197f2b4"
+      "sha256": "15dfd7337489e45e906eece57ff5abc44dd6d79cb3e52a28ca946e847d9aecd3"
     },
     {
       "path": "v6/config.json.example",
@@ -366,11 +378,11 @@
     },
     {
       "path": "v6/scripts/selftest.js",
-      "sha256": "6c4751e811c496365e56d9105f8e96f89049b3d9af309c56d094f9efd7cecd1b"
+      "sha256": "29744cbcbfc4e950518b68659e50f6e5ec7322aceb12351f4649da1d007f8798"
     },
     {
       "path": "v6/scripts/smell-check.js",
-      "sha256": "1e98023f0729503c5d70b9c403c80ead6dbc34f20f3beaddf08b3448afc353c6"
+      "sha256": "3f7d5b0c27e6632d32f9fa289b8315ddc80e5a953fd1269bd9470ad7e682d6f9"
     },
     {
       "path": "v6/scripts/v6-loop-run.sh",

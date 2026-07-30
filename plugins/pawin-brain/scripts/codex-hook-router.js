@@ -19,12 +19,23 @@ const SCRIPTS = {
   captureLesson: path.join(RUNTIME_DIR, 'scripts/capture-lesson.js'),
   updateState: path.join(RUNTIME_DIR, 'scripts/update-state.js')
 };
+const STOP_TIMEOUTS = Object.freeze({
+  stopAudit: 6000,
+  finishWork: 6000,
+  thinkDetect: 6000,
+  captureLesson: 9000,
+  updateState: 5000
+});
+const STOP_BUDGET_MS = 38000;
+const MAX_ROLLOUT_TAIL_BYTES = 4 * 1024 * 1024;
 
 let input = '';
-process.stdin.setEncoding('utf8');
-process.stdin.on('data', chunk => (input += chunk));
-process.stdin.on('error', () => process.exit(0));
-process.stdin.on('end', main);
+if (require.main === module) {
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('data', chunk => (input += chunk));
+  process.stdin.on('error', () => process.exit(0));
+  process.stdin.on('end', main);
+}
 
 function parsePayload(raw) {
   try {
@@ -102,6 +113,53 @@ function runScript(script, stdin, timeout = 12000) {
   }
 }
 
+function deadlineBudget(totalMs) {
+  const deadline = Date.now() + totalMs;
+  return (capMs, reserveMs = 0) => Math.max(
+    0,
+    Math.min(capMs, deadline - Date.now() - reserveMs)
+  );
+}
+
+function runBudgeted(script, stdin, timeout) {
+  return timeout > 0 ? runScript(script, stdin, timeout) : null;
+}
+
+function childFailure(result) {
+  if (!result) return 'spawn_failed';
+  if (result.error?.code === 'ETIMEDOUT' || result.signal === 'SIGTERM') return 'timeout';
+  if (result.error) return 'spawn_failed';
+  if (typeof result.status === 'number' && result.status !== 0) return 'nonzero_exit';
+  if (result.status === null && result.signal) return 'terminated';
+  return '';
+}
+
+function reportStepFailure(step, result) {
+  const reason = childFailure(result);
+  if (!reason) return false;
+  process.stderr.write(`pawin-brain: ${step} failed (${reason})\n`);
+  return true;
+}
+
+function emitContext(eventName, additionalContext) {
+  if (!additionalContext) return;
+  process.stdout.write(JSON.stringify({
+    hookSpecificOutput: {
+      hookEventName: eventName,
+      additionalContext
+    }
+  }));
+}
+
+function emitHookFailure(mode, reason) {
+  const eventName = mode === 'session-start' ? 'SessionStart' :
+    mode === 'user-prompt' ? 'UserPromptSubmit' : '';
+  const message = `> ⚠️ Pawin Brain 未完成本轮注入（${reason}）` +
+    '。本轮会继续运行，但不会假装记忆已加载；请运行 Brain doctor。';
+  if (eventName) emitContext(eventName, message);
+  else process.stderr.write(`pawin-brain: ${reason}\n`);
+}
+
 function validJson(text) {
   const value = String(text || '').trim();
   if (!value) return '';
@@ -155,7 +213,10 @@ function transcriptCandidate(payload) {
     payload.rollout_path,
     payload.rolloutPath
   ]) {
-    if (typeof candidate === 'string' && fs.existsSync(candidate)) return candidate;
+    if (typeof candidate !== 'string') continue;
+    let stat;
+    try { stat = fs.lstatSync(candidate); } catch { stat = null; }
+    if (stat && stat.isFile() && !stat.isSymbolicLink()) return candidate;
   }
   return null;
 }
@@ -164,14 +225,35 @@ function transcriptLine(role, content) {
   return JSON.stringify({ role, content, message: { role, content } });
 }
 
-function responseItemLines(file) {
-  if (!file) return [];
-  let rows;
+function readBoundedTail(file, maxBytes = MAX_ROLLOUT_TAIL_BYTES) {
+  if (!file) return '';
+  let descriptor;
   try {
-    rows = fs.readFileSync(file, 'utf8').split('\n').filter(Boolean).slice(-500);
+    const flags = fs.constants.O_RDONLY | (fs.constants.O_NOFOLLOW || 0);
+    descriptor = fs.openSync(file, flags);
+    const stat = fs.fstatSync(descriptor);
+    if (!stat.isFile()) return '';
+    const length = Math.min(stat.size, maxBytes);
+    const offset = Math.max(0, stat.size - length);
+    const buffer = Buffer.alloc(length);
+    const bytesRead = fs.readSync(descriptor, buffer, 0, length, offset);
+    let text = buffer.subarray(0, bytesRead).toString('utf8');
+    if (offset > 0) {
+      const firstLineEnd = text.indexOf('\n');
+      text = firstLineEnd >= 0 ? text.slice(firstLineEnd + 1) : '';
+    }
+    return text;
   } catch {
-    return [];
+    return '';
+  } finally {
+    if (descriptor !== undefined) {
+      try { fs.closeSync(descriptor); } catch {}
+    }
   }
+}
+
+function responseItemLines(file) {
+  const rows = readBoundedTail(file).split('\n').filter(Boolean).slice(-500);
   const lines = [];
   for (const row of rows) {
     let record;
@@ -195,6 +277,23 @@ function responseItemLines(file) {
     }
   }
   return lines;
+}
+
+function createPrivateTranscript(prefix, lines) {
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), prefix));
+  try {
+    fs.chmodSync(directory, 0o700);
+    const file = path.join(directory, 'transcript.jsonl');
+    fs.writeFileSync(file, `${lines.join('\n')}\n`, {
+      mode: 0o600,
+      flag: 'wx'
+    });
+    fs.chmodSync(file, 0o600);
+    return { directory, file };
+  } catch (error) {
+    try { fs.rmSync(directory, { recursive: true, force: true }); } catch {}
+    throw error;
+  }
 }
 
 function buildTranscript(payload) {
@@ -229,18 +328,27 @@ function buildTranscript(payload) {
   }
 
   if (lines.length === 0) return null;
-  const file = path.join(
-    os.tmpdir(),
-    `pawin-brain-codex-${process.pid}-${Date.now()}.jsonl`
-  );
-  fs.writeFileSync(file, `${lines.join('\n')}\n`, { mode: 0o600 });
-  return file;
+  return createPrivateTranscript('pawin-brain-codex-', lines);
 }
 
 function routeUserPrompt(payload) {
   const adapted = normalizePayload(payload, 'UserPromptSubmit');
-  const result = runScript(SCRIPTS.injectContext, JSON.stringify(adapted), 15000);
-  relayUserPrompt(result && result.stdout);
+  const remaining = deadlineBudget(12500);
+  const result = runBudgeted(
+    SCRIPTS.injectContext,
+    JSON.stringify(adapted),
+    remaining(12000)
+  );
+  if (reportStepFailure('inject-context', result)) {
+    emitHookFailure('user-prompt', 'context_injection_failed');
+    return;
+  }
+  const output = validJson(result && result.stdout);
+  if (!output && String(adapted.prompt || adapted.user_prompt || '').trim()) {
+    emitHookFailure('user-prompt', 'context_output_invalid');
+    return;
+  }
+  relayUserPrompt(output);
 }
 
 function patchPaths(payload) {
@@ -264,32 +372,45 @@ function routeTool(payload) {
   const eventName = failure ? 'PostToolUseFailure' : 'PostToolUse';
   const adapted = normalizePayload(payload, eventName);
   const raw = JSON.stringify(adapted);
-  runScript(SCRIPTS.trackBehavior, raw);
+  const remaining = deadlineBudget(12000);
+  reportStepFailure(
+    'track-behavior',
+    runBudgeted(SCRIPTS.trackBehavior, raw, remaining(3500, 7000))
+  );
   if (!failure) {
     const paths = patchPaths(payload);
     if (paths.length) {
       for (const filePath of paths) {
+        const timeout = remaining(3500);
+        if (timeout <= 0) break;
         const smellPayload = normalizePayload({
           ...payload,
           tool_name: 'Edit',
           tool_input: { file_path: filePath }
         }, 'PostToolUse');
-        const smell = runScript(SCRIPTS.smellCheck, JSON.stringify(smellPayload));
+        const smell = runBudgeted(
+          SCRIPTS.smellCheck,
+          JSON.stringify(smellPayload),
+          timeout
+        );
+        reportStepFailure('smell-check', smell);
         if (validJson(smell && smell.stdout)) {
           relay(smell.stdout);
           break;
         }
       }
     } else {
-      const smell = runScript(SCRIPTS.smellCheck, raw);
+      const smell = runBudgeted(SCRIPTS.smellCheck, raw, remaining(3500));
+      reportStepFailure('smell-check', smell);
       relay(smell && smell.stdout);
     }
   }
 }
 
 function routeStop(payload) {
+  const remaining = deadlineBudget(STOP_BUDGET_MS);
   const temporary = buildTranscript(payload);
-  const transcriptPath = temporary;
+  const transcriptPath = temporary && temporary.file;
   const adapted = normalizePayload({
     ...payload,
     transcript_path: transcriptPath || undefined,
@@ -300,16 +421,45 @@ function routeStop(payload) {
 
   try {
     if (transcriptPath) {
-      runScript(SCRIPTS.stopAudit, raw);
-      const finish = runScript(SCRIPTS.finishWork, raw);
+      reportStepFailure(
+        'stop-audit',
+        runBudgeted(
+          SCRIPTS.stopAudit,
+          raw,
+          remaining(STOP_TIMEOUTS.stopAudit, STOP_TIMEOUTS.updateState + 1000)
+        )
+      );
+      const finish = runBudgeted(
+        SCRIPTS.finishWork,
+        raw,
+        remaining(STOP_TIMEOUTS.finishWork, STOP_TIMEOUTS.updateState + 1000)
+      );
+      reportStepFailure('finish-the-work', finish);
       finishOutput = finish && finish.stdout;
-      runScript(SCRIPTS.thinkDetect, raw);
-      runScript(SCRIPTS.captureLesson, raw, 15000);
+      reportStepFailure(
+        'think-detect',
+        runBudgeted(
+          SCRIPTS.thinkDetect,
+          raw,
+          remaining(STOP_TIMEOUTS.thinkDetect, STOP_TIMEOUTS.updateState + 1000)
+        )
+      );
+      reportStepFailure(
+        'capture-lesson',
+        runBudgeted(
+          SCRIPTS.captureLesson,
+          raw,
+          remaining(STOP_TIMEOUTS.captureLesson, STOP_TIMEOUTS.updateState + 1000)
+        )
+      );
     }
-    runScript(SCRIPTS.updateState, raw);
+    reportStepFailure(
+      'update-state',
+      runBudgeted(SCRIPTS.updateState, raw, remaining(STOP_TIMEOUTS.updateState))
+    );
   } finally {
     if (temporary) {
-      try { fs.unlinkSync(temporary); } catch {}
+      try { fs.rmSync(temporary.directory, { recursive: true, force: true }); } catch {}
     }
   }
   relay(finishOutput);
@@ -330,15 +480,23 @@ function main() {
     if (MODE === 'stop') return routeStop(payload);
   } catch {
     // Hooks are advisory. Brain must never block Codex because Brain itself failed.
+    emitHookFailure(MODE, 'bootstrap_or_router_failed');
   }
 }
 
 module.exports = {
   buildTranscript,
+  childFailure,
+  deadlineBudget,
   normalizePayload,
   normalizeToolName,
   patchPaths,
+  readBoundedTail,
+  responseItemLines,
   sessionId,
+  STOP_BUDGET_MS,
+  STOP_TIMEOUTS,
   toolFailed,
-  transcriptCandidate
+  transcriptCandidate,
+  runBudgeted
 };

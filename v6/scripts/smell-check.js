@@ -19,7 +19,12 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const V6_DIR = path.join(os.homedir(), '.claude-brain/v6');
+const BRAIN_DIR = path.resolve(
+  process.env.CLAUDE_BRAIN_DIR ||
+  process.env.BRAIN_DIR ||
+  path.join(os.homedir(), '.claude-brain')
+);
+const V6_DIR = path.join(BRAIN_DIR, 'v6');
 const CONFIG_PATH = path.join(V6_DIR, 'config.json');
 const THROTTLE_PATH = path.join(V6_DIR, 'state/throttle.json');
 
@@ -62,9 +67,17 @@ function loadConfig() {
 
 // 原子写：临时文件 + rename，避免多 session 并发写 throttle.json 损坏
 function writeAtomic(p, content) {
-  const tmp = `${p}.tmp.${process.pid}`;
-  fs.writeFileSync(tmp, content);
-  fs.renameSync(tmp, p);
+  const directory = path.dirname(p);
+  const tmp = `${p}.tmp.${process.pid}.${Date.now()}`;
+  fs.mkdirSync(directory, { recursive: true, mode: 0o700 });
+  if (process.platform !== 'win32') fs.chmodSync(directory, 0o700);
+  try {
+    fs.writeFileSync(tmp, content, { mode: 0o600, flag: 'wx' });
+    fs.renameSync(tmp, p);
+    if (process.platform !== 'win32') fs.chmodSync(p, 0o600);
+  } finally {
+    try { fs.unlinkSync(tmp); } catch {}
+  }
 }
 
 // 门禁：只查源码文件，跳过文档/配置/数据/依赖/记忆/日记

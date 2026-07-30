@@ -19,6 +19,7 @@
  */
 
 const fs = require('fs');
+const path = require('path');
 
 // ── 项目迭代信号词（关键词命中是必要条件）─────────────────────────────────
 const IDEA_LOOP_HINT = /优化|迭代|升级|重构|R[1-9](?:\s|批|减负|前端|后端|诚信)|下一步.*?(?:走|干|做)|怎么走|启动新.*?项目|开新.*?项目|要不要做|可以做|项目要怎么|这个项目下一步|dogfood|侦察|swarm/i;
@@ -44,10 +45,13 @@ function isThrottled(lastTriggerPath) {
 }
 
 function recordTrigger(lastTriggerPath) {
+  if (process.env.BRAIN_DRY_RUN === '1') return;
   try {
+    fs.mkdirSync(path.dirname(lastTriggerPath), { recursive: true, mode: 0o700 });
     fs.writeFileSync(lastTriggerPath, JSON.stringify({
       timestamp: new Date().toISOString(),
-    }, null, 2));
+    }, null, 2), { mode: 0o600 });
+    fs.chmodSync(lastTriggerPath, 0o600);
   } catch {}
 }
 

@@ -1,0 +1,48 @@
+name: public-v8-tests
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [20, 22]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: ${{ matrix.node }}
+      - name: Shell syntax
+        run: |
+          sh -n install-hooks.sh
+          sh -n install-zcode-hooks.sh
+      - name: JavaScript syntax
+        run: |
+          while IFS= read -r -d '' file; do
+            node --check "$file"
+          done < <(find scripts v2 v3 v4 v5 v6 zcode-shim plugins/pawin-brain/scripts -name '*.js' -print0)
+      - name: Generated Codex runtime is current
+        run: |
+          node scripts/build-codex-runtime.js
+          git diff --exit-code -- \
+            plugins/pawin-brain/runtime \
+            plugins/pawin-brain/runtime-manifest.json
+      - name: Test
+        run: >-
+          node --test
+          tests/claude/*.test.js
+          tests/codex/*.test.js
+          tests/security/*.test.js
+          tests/selftest/*.test.js
+          tests/zcode/*.test.js
+      - name: Tests leave the checkout unchanged
+        run: test -z "$(git status --porcelain --untracked-files=all)"
